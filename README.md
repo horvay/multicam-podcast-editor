@@ -41,4 +41,4 @@ python main.py
 It will take quite some time to run but should give updates on it's progress.
 
 ### Compatibility
-- Confirmed working on Windows 10, have not confirmed on other operating systems
+- I've only run this on linux but it should work for other environments since it's python
