@@ -17,8 +17,8 @@ I've created a tool to automatically do 2 things:
 1. Install auto-editor and align-videos-by-sound as per their github page
 1. run the following
 ```bash
-git clone this-repo
-cd this-repo
+git clone https://github.com/horvay/multicam-podcast-editor
+cd multicam-podcast-editor
 pip install -r requirements.txt
 ```
 
