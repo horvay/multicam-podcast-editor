@@ -14,26 +14,46 @@ from moviepy.editor import (
     concatenate_videoclips,
 )
 
-vid_list = [
-    "main.mp4",
-]
+files = glob.glob("person*.mp4") + glob.glob("*webcam*.mp4")
+screenshares = glob.glob("*screen*.mp4")
+vid_list = ["main.mp4"] + files
 
-files = glob.glob("person*.mp4")
-vid_list = vid_list + files
 print("list of vids found to process" + str(vid_list))
+print("list of vids screen shares to reduce focus on: " + str(screenshares))
 
 vids: List[VideoClip] = []
 
+reduced_focus_times = []
+for _, ss in enumerate(screenshares):
+    import re
+
+    time_match = re.search(r"(\d+h_)?(\d+m_)?(\d+s_)?(\d+ms)", ss)
+
+    if time_match:
+        hours = int(time_match.group(1)[:-2] if time_match.group(1) else 0)
+        minutes = int(time_match.group(2)[:-2] if time_match.group(2) else 0)
+        seconds = int(time_match.group(3)[:-2] if time_match.group(3) else 0)
+        milliseconds = int(time_match.group(4)[:-2] if time_match.group(4) else 0)
+
+        start_seconds = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000
+
+        ss_vid = VideoFileClip(ss)
+        end_seconds = start_seconds + ss_vid.duration
+        reduced_focus_times.append((start_seconds, end_seconds))
+
+        print(
+            f"creating less focused session from: {start_seconds:.2f} to: {end_seconds:.2f}"
+        )
+    else:
+        print(f"Time format not found in the screen file {ss}")
+
 
 def volume(array1):
-    return np.sqrt(
-        ((1.0 * array1) ** 2).mean()
-    )  # fucntion returning the volume of inputted clip.
+    return np.sqrt(((1.0 * array1) ** 2).mean())
 
 
 for vid in vid_list:
     video = VideoFileClip(vid)
-    # print(video)/home/horvay/Documents/multicam-podcast-editor/intronewplayers.mp4 /home/horvay/Documents/multicam-podcast-editor/intronewplayers.mp4 /home/horvay/Documents/multicam-podcast-editor/intronewplayers.mp4 /home/horvay/Documents/multicam-podcast-editor/intronewplayers.mp4 /home/horvay/Downloads/person1.mp4 /home/horvay/Downloads/person2.mp4 /home/horvay/Downloads/person3.mp4 /home/horvay/Downloads/main.mp4
     vids.append(video)
 
 print("videos loaded")
@@ -73,7 +93,7 @@ for i in range(1, len(vids)):
         delta = vids[0].duration - vids[i].duration
         print("adding " + str(delta) + " seconds to clip " + str(i))
         blank_clip = ColorClip(size=vids[i].size, color=(0, 0, 0), duration=delta)
-        vids[i] = concatenate_videoclips([blank_clip, vids[i]])
+        vids[i] = concatenate_videoclips([vids[i], blank_clip])
 
 print("finish syncing based on audio")
 
@@ -131,36 +151,48 @@ for vid in vids:
 
 print("finished breaking up vid clips into 5 second chunks")
 
-secondsDiviedBy5 = int(vids[0].audio.duration / 5)  # pyright: ignore
+secondsDiviedBy5: int = math.ceil(vids[0].audio.duration / 5)  # pyright: ignore
 main_clip = clips[0]
 
 people_vols = average_volumes[1:]
 people_clips = clips[1:]
 
 final_clips: List[VideoClip] = [main_clip[0]]
+unfocused_count: int = 0
+
 
 # going through every 5 seconds of the audio clips.
 for i in range(1, secondsDiviedBy5):
-    greater = True
+    # skip if in reduced focus times and we've been focused in the last 10 seconds
+    if unfocused_count < 2:
+        for start, end in reduced_focus_times:
+            if start < secondsDiviedBy5 * 5 < end:
+                final_clips.append(main_clip[i])
+                continue
+
+    is_added = False
     for x, xvol in enumerate(people_vols):
-        greater = True
+        is_louder = True
+
         for y, yvol in enumerate(people_vols):
             if y == x:
                 continue
             if xvol[i] * 0.1 < yvol[i]:
-                greater = False
+                is_louder = False
                 break
 
-        if greater:
+        if is_louder:
             print("interval " + str(i) + " had person " + str(x) + " greater vol")
             final_clips.append(people_clips[x][i])
-            # final = concatenate_videoclips([final, people_clips[x][i]])
+            is_added = True
+            unfocused_count = 0
             break
 
-    if not greater:
+    if not is_added:
         print("interval " + str(i) + " had no greater person vol")
         final_clips.append(main_clip[i])
-        # final = concatenate_videoclips([final, main_clip[i]])
+        unfocused_count = unfocused_count + 1
+
 
 final = concatenate_videoclips(final_clips)
 

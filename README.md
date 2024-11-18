@@ -4,6 +4,7 @@ If you use an app like streamyards, they provide the main podcast video, and the
 I've created a tool to automatically do 2 things:
 1. Synchronize the videos to the main multipeople video. The individuals' files are always slightly off in their timing.
 2. Chunk the file videos into 5 second segments and use the individuals' video if they are mostly the only one talking for those 5 seconds.
+  - If a screenshare is active, it ensures it's shown for 10 second intervals between focusing on individuals
 3. Use jump cutting to remove dead air
 
 ### Dependencies
@@ -29,7 +30,8 @@ pip install -r requirements.txt
 This tool assumes you have 2 or more files: a video with all the audio and video from all the participants, and individual videos for each participant.
 You will need to follow this naming exactly:
 - call the video with all the cameras and audios "main.mp4"
-- call each of the individuals' videos "person1.mp4", "person2.mp4", etc
+- call each of the individuals' videos "person1.mp4", "person2.mp4", etc, or have the word "webcam" in the name. (this is because individual files in streamyard have the name webcam so I can just copy and paste them)
+- if you want to include screenshares, then copy those over and ensure they have the word "screen" in them.
 
 Ensure these videos are in the same directory as this tool.
 
