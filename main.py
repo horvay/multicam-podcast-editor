@@ -41,8 +41,8 @@ print("videos loaded")
 #########################################
 ### padd the person clips to align them #
 #########################################
-command = " ".join(["alignment_info_by_sound_track --json"] + vid_list)
-# command = " ".join(["alignment_info_by_sound_track --clear_cache --json"] + vid_list)
+# command = " ".join(["alignment_info_by_sound_track --json"] + vid_list)
+command = " ".join(["alignment_info_by_sound_track --clear_cache --json"] + vid_list)
 
 process = subprocess.Popen(
     command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
