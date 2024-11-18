@@ -33,7 +33,7 @@ def volume(array1):
 
 for vid in vid_list:
     video = VideoFileClip(vid)
-    # print(video)
+    # print(video)/home/horvay/Documents/multicam-podcast-editor/intronewplayers.mp4 /home/horvay/Documents/multicam-podcast-editor/intronewplayers.mp4 /home/horvay/Documents/multicam-podcast-editor/intronewplayers.mp4 /home/horvay/Documents/multicam-podcast-editor/intronewplayers.mp4 /home/horvay/Downloads/person1.mp4 /home/horvay/Downloads/person2.mp4 /home/horvay/Downloads/person3.mp4 /home/horvay/Downloads/main.mp4
     vids.append(video)
 
 print("videos loaded")
@@ -41,8 +41,8 @@ print("videos loaded")
 #########################################
 ### padd the person clips to align them #
 #########################################
-# command = " ".join(["alignment_info_by_sound_track --json"] + vid_list)
-command = " ".join(["alignment_info_by_sound_track --clear_cache --json"] + vid_list)
+command = " ".join(["alignment_info_by_sound_track --json"] + vid_list)
+# command = " ".join(["alignment_info_by_sound_track --clear_cache --json"] + vid_list)
 
 process = subprocess.Popen(
     command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -65,6 +65,15 @@ for item in json_data["edit_list"]:
     print("before: " + str(vids[vid_index].audio.duration))  # pyright: ignore
     vids[vid_index] = concatenate_videoclips([blank_clip, video_clip])
     print("after: " + str(vids[vid_index].audio.duration))  # pyright: ignore
+
+### if the video ends early, extend it.
+reference_duration = vids[0].duration
+for i in range(1, len(vids)):
+    if vids[i].duration < reference_duration:
+        delta = vids[0].duration - vids[i].duration
+        print("adding " + str(delta) + " seconds to clip " + str(i))
+        blank_clip = ColorClip(size=vids[i].size, color=(0, 0, 0), duration=delta)
+        vids[i] = concatenate_videoclips([blank_clip, vids[i]])
 
 print("finish syncing based on audio")
 
@@ -114,20 +123,24 @@ for vid in vids:
         # print("vid_clips now has this many elements: " + str(len(vid_clips)))
         x = x + 5
 
+    if x < vid.duration:
+        newclip = vid.subclip(x, vid.duration - x)
+        vid_clips.append(newclip)
+
     clips.append(vid_clips)
 
 print("finished breaking up vid clips into 5 second chunks")
 
 secondsDiviedBy5 = int(vids[0].audio.duration / 5)  # pyright: ignore
 main_clip = clips[0]
-final = main_clip[0]
 
 people_vols = average_volumes[1:]
 people_clips = clips[1:]
 
-for i in range(
-    1, secondsDiviedBy5
-):  # going through every 5 seconds of the audio clips.
+final_clips: List[VideoClip] = [main_clip[0]]
+
+# going through every 5 seconds of the audio clips.
+for i in range(1, secondsDiviedBy5):
     greater = True
     for x, xvol in enumerate(people_vols):
         greater = True
@@ -140,13 +153,16 @@ for i in range(
 
         if greater:
             print("interval " + str(i) + " had person " + str(x) + " greater vol")
-            final = concatenate_videoclips([final, people_clips[x][i]])
+            final_clips.append(people_clips[x][i])
+            # final = concatenate_videoclips([final, people_clips[x][i]])
             break
 
     if not greater:
         print("interval " + str(i) + " had no greater person vol")
-        final = concatenate_videoclips([final, main_clip[i]])
+        final_clips.append(main_clip[i])
+        # final = concatenate_videoclips([final, main_clip[i]])
 
+final = concatenate_videoclips(final_clips)
 
 # finalAudio = CompositeAudioClip([v.audio for v in vids[1:]]) # TODO didn't work - no idea why
 final2 = final.set_audio(vids[0].audio)
