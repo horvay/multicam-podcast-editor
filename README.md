@@ -33,7 +33,7 @@ You will need to follow this naming exactly:
 - call each of the individuals' videos "person1.mp4", "person2.mp4", etc, or have the word "webcam" in the name. (this is because individual files in streamyard have the name webcam so I can just copy and paste them)
 - if you want to include screenshares, then copy those over and ensure they have the word "screen" in them.
 
-Ensure these videos are in the same directory as this tool.
+Ensure these videos are in the same directory as this tool, and that none of the files have parenthesis in them. align-videos-by-sound doesn't seem to handle ().
 
 Run the following:
 ```bash
