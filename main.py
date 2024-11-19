@@ -86,17 +86,6 @@ for item in json_data["edit_list"]:
     vids[vid_index] = concatenate_videoclips([blank_clip, video_clip])
     print("after: " + str(vids[vid_index].audio.duration))  # pyright: ignore
 
-### if the video ends early, extend it.
-# reference_duration = vids[0].duration
-# for i in range(1, len(vids)):
-#     if vids[i].duration < reference_duration:
-#         delta = reference_duration - vids[i].duration
-#         print("adding " + str(delta) + " seconds to clip " + str(i))
-#         blank_clip = ColorClip(size=vids[i].size, color=(0, 0, 0), duration=delta)
-#         print("before: " + str(vids[i].audio.duration))  # pyright: ignore
-#         vids[i] = concatenate_videoclips([vids[i], blank_clip])
-#         print("after: " + str(vids[i].audio.duration))  # pyright: ignore
-
 print("finish syncing based on audio")
 
 average_volumes = []
@@ -128,30 +117,6 @@ def roundup(x):
     return int(math.ceil(x / 5.00)) * 5
 
 
-# clips = []
-
-# x = 0
-# y = 0
-# todo: do this as part of determining focus to save lots of time
-# for vid in vids:
-#     vid_duration = roundup(vid.duration) - 5
-#     vid_clips = []
-#
-#     x = 0
-#     while x <= vid_duration:
-#         newclip = vid.subclip(x, x + 5)
-#         vid_clips.append(newclip)
-#         # print("vid_clips now has this many elements: " + str(len(vid_clips)))
-#         x = x + 5
-#
-#     if x < vid.duration:
-#         newclip = vid.subclip(x, vid.duration - x)
-#         vid_clips.append(newclip)
-#
-#     clips.append(vid_clips)
-
-# print("finished breaking up vid clips into 5 second chunks")
-
 secondsDiviedBy5: int = math.ceil(vids[0].audio.duration / 5)  # pyright: ignore
 main = vids[0]
 
@@ -160,7 +125,7 @@ people = vids[1:]
 
 final_clips: List[VideoClip] = [main.subclip(0, 5)]  # pyright: ignore
 unfocused_count: int = 0
-
+focused_count: int = 0
 
 # going through every 5 seconds of the audio clips.
 for i in range(1, secondsDiviedBy5):
@@ -176,35 +141,38 @@ for i in range(1, secondsDiviedBy5):
                 main.subclip(sec, n_sec if main.duration > n_sec else main.duration)  # pyright: ignore
             )
             unfocused_count = unfocused_count + 1
+            focused_count = 0
             is_added = True
             break
 
     if is_added:
         continue
 
-    for x, xvol in enumerate(people_vols):
-        is_louder = True
-        if n_sec > people[x].duration:
-            continue
-
-        for y, yvol in enumerate(people_vols):
-            if y == x:
+    if focused_count < 2:
+        for x, xvol in enumerate(people_vols):
+            is_louder = True
+            if n_sec > people[x].duration:
                 continue
-            if len(yvol) > i and len(xvol) > i and xvol[i] * 0.1 < yvol[i]:
-                is_louder = False
-                break
 
-        if is_louder:
-            print("interval " + str(i) + " had person " + str(x) + " greater vol")
-            final_clips.append(
-                people[x].subclip(  # pyright: ignore
-                    sec,
-                    n_sec if people[x].duration > n_sec else people[x].duration,
+            for y, yvol in enumerate(people_vols):
+                if y == x:
+                    continue
+                if len(yvol) > i and len(xvol) > i and xvol[i] * 0.1 < yvol[i]:
+                    is_louder = False
+                    break
+
+            if is_louder:
+                print("interval " + str(i) + " had person " + str(x) + " greater vol")
+                final_clips.append(
+                    people[x].subclip(  # pyright: ignore
+                        sec,
+                        n_sec if people[x].duration > n_sec else people[x].duration,
+                    )
                 )
-            )
-            is_added = True
-            unfocused_count = 0
-            break
+                is_added = True
+                unfocused_count = 0
+                focused_count = focused_count + 1
+                break
 
     if is_added:
         continue
@@ -214,6 +182,7 @@ for i in range(1, secondsDiviedBy5):
         main.subclip(sec, n_sec if main.duration > n_sec else main.duration)  # pyright: ignore
     )
     unfocused_count = unfocused_count + 1
+    focused_count = 0
 
 
 final = concatenate_videoclips(final_clips)
