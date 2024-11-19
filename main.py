@@ -61,8 +61,8 @@ print("videos loaded")
 #########################################
 ### padd the person clips to align them #
 #########################################
-command = " ".join(["alignment_info_by_sound_track --json"] + vid_list)
-# command = " ".join(["alignment_info_by_sound_track --clear_cache --json"] + vid_list)
+# command = " ".join(["alignment_info_by_sound_track --json"] + vid_list)
+command = " ".join(["alignment_info_by_sound_track --clear_cache --json"] + vid_list)
 
 process = subprocess.Popen(
     command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -87,19 +87,18 @@ for item in json_data["edit_list"]:
     print("after: " + str(vids[vid_index].audio.duration))  # pyright: ignore
 
 ### if the video ends early, extend it.
-reference_duration = vids[0].duration
-for i in range(1, len(vids)):
-    if vids[i].duration < reference_duration:
-        delta = reference_duration - vids[i].duration
-        print("adding " + str(delta) + " seconds to clip " + str(i))
-        blank_clip = ColorClip(size=vids[i].size, color=(0, 0, 0), duration=delta)
-        print("before: " + str(vids[i].audio.duration))  # pyright: ignore
-        vids[i] = concatenate_videoclips([vids[i], blank_clip])
-        print("after: " + str(vids[i].audio.duration))  # pyright: ignore
+# reference_duration = vids[0].duration
+# for i in range(1, len(vids)):
+#     if vids[i].duration < reference_duration:
+#         delta = reference_duration - vids[i].duration
+#         print("adding " + str(delta) + " seconds to clip " + str(i))
+#         blank_clip = ColorClip(size=vids[i].size, color=(0, 0, 0), duration=delta)
+#         print("before: " + str(vids[i].audio.duration))  # pyright: ignore
+#         vids[i] = concatenate_videoclips([vids[i], blank_clip])
+#         print("after: " + str(vids[i].audio.duration))  # pyright: ignore
 
 print("finish syncing based on audio")
 
-volumes = []
 average_volumes = []
 maxes = []
 for vid in vids:
@@ -178,14 +177,14 @@ for i in range(1, secondsDiviedBy5):
             )
             unfocused_count = unfocused_count + 1
             is_added = True
-            continue
+            break
 
     if is_added:
         continue
 
     for x, xvol in enumerate(people_vols):
         is_louder = True
-        if people[x].duration < n_sec:
+        if n_sec > people[x].duration:
             continue
 
         for y, yvol in enumerate(people_vols):
