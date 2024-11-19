@@ -167,22 +167,31 @@ unfocused_count: int = 0
 for i in range(1, secondsDiviedBy5):
     sec = i * 5
     n_sec = sec + 5
+    is_added = False
+
     # skip if in reduced focus times and we've been focused in the last 10 seconds
     for start, end in reduced_focus_times:
         if unfocused_count < 2 and start < sec < end:
+            print(f"interval {i} unfocussing due to screenshare")
             final_clips.append(
                 main.subclip(sec, n_sec if main.duration > n_sec else main.duration)  # pyright: ignore
             )
+            unfocused_count = unfocused_count + 1
+            is_added = True
             continue
 
-    is_added = False
+    if is_added:
+        continue
+
     for x, xvol in enumerate(people_vols):
         is_louder = True
+        if people[x].duration < n_sec:
+            continue
 
         for y, yvol in enumerate(people_vols):
             if y == x:
                 continue
-            if len(yvol) > i and xvol[i] * 0.1 < yvol[i]:
+            if len(yvol) > i and len(xvol) > i and xvol[i] * 0.1 < yvol[i]:
                 is_louder = False
                 break
 
@@ -198,12 +207,14 @@ for i in range(1, secondsDiviedBy5):
             unfocused_count = 0
             break
 
-    if not is_added:
-        print("interval " + str(i) + " had no greater person vol")
-        final_clips.append(
-            main.subclip(sec, n_sec if main.duration > n_sec else main.duration)  # pyright: ignore
-        )
-        unfocused_count = unfocused_count + 1
+    if is_added:
+        continue
+
+    print("interval " + str(i) + " had no greater person vol")
+    final_clips.append(
+        main.subclip(sec, n_sec if main.duration > n_sec else main.duration)  # pyright: ignore
+    )
+    unfocused_count = unfocused_count + 1
 
 
 final = concatenate_videoclips(final_clips)
