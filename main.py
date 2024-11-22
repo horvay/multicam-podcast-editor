@@ -9,6 +9,7 @@ import numpy as np
 from moviepy.editor import (
     AudioClip,
     ColorClip,
+    CompositeAudioClip,
     VideoClip,
     VideoFileClip,
     concatenate_videoclips,
@@ -20,6 +21,15 @@ vid_list = ["main.mp4"] + files
 
 print("list of vids found to process" + str(vid_list))
 print("list of vids screen shares to reduce focus on: " + str(screenshares))
+
+
+for vid in vid_list:
+    command = (
+        f"ffmpeg -i {vid} -c:v copy -b:a 128k temp_video.mp4 && mv temp_video.mp4 {vid}"
+    )
+    subprocess.run(command, shell=True)
+
+print("finished making all bit rates the same")
 
 vids: List[VideoClip] = []
 
@@ -61,7 +71,7 @@ print("videos loaded")
 #########################################
 ### padd the person clips to align them #
 #########################################
-# command = " ".join(["alignment_info_by_sound_track --json"] + vid_list)
+command = " ".join(["alignment_info_by_sound_track --json"] + vid_list)
 command = " ".join(["alignment_info_by_sound_track --clear_cache --json"] + vid_list)
 
 process = subprocess.Popen(
@@ -81,7 +91,12 @@ for item in json_data["edit_list"]:
 
     vid_index = vid_list.index(filename)
     video_clip = vids[vid_index]
+
+    silent_audio = video_clip.audio.subclip(0, padding)
+
     blank_clip = ColorClip(size=video_clip.size, color=(0, 0, 0), duration=padding)
+    blank_clip = blank_clip.set_audio(silent_audio)
+
     print("before: " + str(vids[vid_index].audio.duration))  # pyright: ignore
     vids[vid_index] = concatenate_videoclips([blank_clip, video_clip])
     print("after: " + str(vids[vid_index].audio.duration))  # pyright: ignore
@@ -187,14 +202,11 @@ for i in range(1, secondsDiviedBy5):
 
 final = concatenate_videoclips(final_clips)
 
-# finalAudio = CompositeAudioClip([v.audio for v in vids[1:]]) # TODO didn't work - no idea why
-final2 = final.set_audio(vids[0].audio)
+finalAudio = CompositeAudioClip([v.audio for v in vids[1:]])
+final2: VideoClip = final.set_audio(finalAudio)  # pyright: ignore
 final2.write_videofile(  # pyright: ignore
-    "multicam-podcast.mp4", audio_bitrate="1000k", bitrate="4000k"
+    "final.mp4", codec="libx264", preset="slow", bitrate="3000k"
 )
 
-command = "auto-editor multicam-podcast.mp4 --margin 0.4sec --no-open -q -c:v h264"
-subprocess.run(command, shell=True)
-
-command = "ffmpeg -i multicam-podcast_ALTERED.mp4 -q:v 0 final.mp4"
-subprocess.run(command, shell=True)
+# command = "auto-editor multicam-podcast.mp4 --margin 0.4sec --no-open -q -c:v h264"
+# subprocess.run(command, shell=True)
