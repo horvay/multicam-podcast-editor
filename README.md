@@ -50,13 +50,13 @@ You will need to follow this naming exactly:
 
 Ensure these videos are in the same directory as this tool, and that none of the files have parenthesis in them. align-videos-by-sound doesn't seem to handle ().
 
-Run the following:
+Run the following for multicam editing
 
 ```bash
 python main.py --multicam
 ```
 
-or
+or for transcribing
 
 ```bash
 python main.py --transcribe
@@ -68,7 +68,7 @@ run the following to see all options
 python main.py --help
 ```
 
-Lastly, if you wanted to do automatic multicam editing including jump cuts to remove deadair, transcribe the videos into a text file, and then ask for youtube titles about your videos, you could do the following:
+For instance, if you wanted to do automatic multicam editing including jump cuts to remove deadair, transcribe the videos into a text file, and then ask for youtube titles about your videos, you could do the following:
 
 ```bash
 python main.py --multicam --jump-cuts --transcribe --question "what are some good youtube titles for this podcast?"
