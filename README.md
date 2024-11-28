@@ -74,7 +74,7 @@ For instance, if you wanted to do automatic multicam editing including jump cuts
 python main.py --multicam --jump-cuts --transcribe --question "what are some good youtube titles for this podcast?"
 ```
 
-This would give you the final edited video outputted to the directory, a transcription.txt file, and it would output the console the response to your question, using an ollama LLM (llama3.2 by default)
+This would give you the final edited video outputted to the directory, a transcript.txt file, and it would output the console the response to your question, using an ollama LLM (llama3.2 by default)
 
 It will take quite some time to run but should give updates on it's progress.
 
