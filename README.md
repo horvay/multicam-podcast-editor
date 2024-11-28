@@ -10,11 +10,13 @@
 
 If you use an app like streamyards, they provide the main podcast video, and then separate individual video files for each person attending your streamyard session.
 
-I've created a tool to automatically do 2 things:
+I've created a tool to automatically do the following things:
 
 1. Synchronize the videos to the main multipeople video. The individuals' files are always slightly off in their timing.
 2. Chunk the file videos into 5 second segments and use the individuals' video if they are mostly the only one talking for those 5 seconds.
 3. Use jump cutting to remove dead air
+4. Transcribe the video using the individuals' videos
+5. The ability to ask an LLM about your podcast/video transcription
 
 ## Dependencies
 
