@@ -11,6 +11,7 @@ I've created a tool to automatically do 2 things:
 - ffmpeg
 - https://github.com/WyattBlue/auto-editor
 - https://github.com/align-videos-by-sound/align-videos-by-sound
+- For chat, install ollama
 
 ### installation
 
@@ -37,7 +38,15 @@ Ensure these videos are in the same directory as this tool, and that none of the
 
 Run the following:
 ```bash
-python main.py
+python main.py --multicam
+```
+or
+```bash
+python main.py --transcribe
+```
+run the following to see all options
+```bash
+python main.py --help
 ```
 
 It will take quite some time to run but should give updates on it's progress.
