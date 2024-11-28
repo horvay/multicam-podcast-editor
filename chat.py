@@ -1,6 +1,5 @@
 import os
 from ollama import chat
-from ollama import ChatResponse
 
 
 def chat_with_transcript(question, model="llama3.2-vision"):
@@ -11,8 +10,9 @@ def chat_with_transcript(question, model="llama3.2-vision"):
     with open("transcript.txt", "r") as file:
         chat_log = file.read()
 
-    response: ChatResponse = chat(
+    stream = chat(
         model=model,
+        stream=True,
         messages=[
             {
                 "role": "system",
@@ -25,4 +25,5 @@ def chat_with_transcript(question, model="llama3.2-vision"):
         ],
     )
 
-    print(response["message"]["content"])
+    for chunk in stream:
+        print(chunk["message"]["content"], end="", flush=True)
