@@ -1,3 +1,4 @@
 moviepy
 numpy
-subprocess
+faster-whisper
+ollama

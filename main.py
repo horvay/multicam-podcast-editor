@@ -2,6 +2,7 @@ import glob
 import json
 import math
 import os
+import re
 import subprocess
 from typing import List
 
@@ -22,11 +23,8 @@ vid_list = ["main.mp4"] + files
 print("list of vids found to process" + str(vid_list))
 print("list of vids screen shares to reduce focus on: " + str(screenshares))
 
-
 for vid in vid_list:
-    command = (
-        f"ffmpeg -i {vid} -c:v copy -b:a 128k temp_video.mp4 && mv temp_video.mp4 {vid}"
-    )
+    command = f"ffmpeg -i {vid} -c:v copy -b:a 128k -ar 44100 -frame_size 1024 temp_video.mp4 && mv temp_video.mp4 {vid}"
     subprocess.run(command, shell=True)
 
 print("finished making all bit rates the same")
@@ -35,8 +33,6 @@ vids: List[VideoClip] = []
 
 reduced_focus_times = []
 for _, ss in enumerate(screenshares):
-    import re
-
     time_match = re.search(r"(\d+h_)?(\d+m_)?(\d+s_)?(\d+ms)", ss)
 
     if time_match:
@@ -62,7 +58,7 @@ def volume(array1):
     return np.sqrt(((1.0 * array1) ** 2).mean())
 
 
-for vid in vid_list:
+for i, vid in enumerate(vid_list):
     video = VideoFileClip(vid)
     vids.append(video)
 
@@ -71,7 +67,7 @@ print("videos loaded")
 #########################################
 ### padd the person clips to align them #
 #########################################
-command = " ".join(["alignment_info_by_sound_track --json"] + vid_list)
+# command = " ".join(["alignment_info_by_sound_track --json"] + vid_list)
 command = " ".join(["alignment_info_by_sound_track --clear_cache --json"] + vid_list)
 
 process = subprocess.Popen(
@@ -92,7 +88,7 @@ for item in json_data["edit_list"]:
     vid_index = vid_list.index(filename)
     video_clip = vids[vid_index]
 
-    silent_audio = video_clip.audio.subclip(0, padding)
+    silent_audio = video_clip.audio.subclip(0, padding)  # pyright: ignore
 
     blank_clip = ColorClip(size=video_clip.size, color=(0, 0, 0), duration=padding)
     blank_clip = blank_clip.set_audio(silent_audio)
