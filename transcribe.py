@@ -12,10 +12,12 @@ def transcribe(individuals, word_pause=1):
     print("list of vids found to transcribe " + str(individuals))
 
     def _extract_name(file_name):
-        pattern = r"-([^-]+)-webcam.*\.mp4$"
+        pattern = r"_-_\d-(.*)-webcam"
         match = re.search(pattern, file_name)
         if match:
-            return match.group(1)
+            name = match.group(1)
+            print(f"found name {name}")
+            return name
         return None
 
     def _format_seconds(seconds):
@@ -26,6 +28,9 @@ def transcribe(individuals, word_pause=1):
 
         return f"{hours:02d}h {minutes:02d}m {seconds:02d}s"
 
+    def _format_chat(entry):
+        return f"[{_format_seconds(entry[1])}] {entry[0]}: {entry[3]}\n"
+
     print("finished making all bit rates the same")
 
     transcription = []
@@ -33,27 +38,37 @@ def transcribe(individuals, word_pause=1):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"using {device}")
 
-    model = WhisperModel("large-v3", device, compute_type="float16")
+    model = WhisperModel("large-v3", device)
     for i, vid in enumerate(individuals):
         print(f"transcribing video {vid}")
         name = _extract_name(vid) or f"Person{i}"
 
         video = VideoFileClip(vid)
-        video.audio.write_audiofile("temp.mp3", codec="mp3", bitrate="192k")  # pyright: ignore
+        video.audio.write_audiofile("temp.wav")  # pyright: ignore
         segments, _ = model.transcribe(
-            "temp.mp3",
+            "temp.wav",
             suppress_tokens=[],
             vad_filter=True,
-            condition_on_previous_text=False,
+            vad_parameters={"speech_pad_ms": 1000},
+            initial_prompt="transcribe the following and include a *laughing* when there is laughter'",
+            condition_on_previous_text=True,
+            log_progress=True,
             beam_size=5,
             word_timestamps=True,
+            hotwords="laughing laugh laughter",
         )
-
+        with open(f"{name}.txt", "w") as aoeuaoeu:
+            aoeuaoeu.close()
         current_speech = [name, 0, 0, ""]
         for segment in segments:
             for word in segment.words or []:
                 if word.end - current_speech[2] > word_pause:
                     if current_speech[3] != "":
+                        with open(f"{name}.txt", "a") as file2:
+                            file2.write(_format_chat(current_speech))
+
+                        if "laughing" in current_speech[3]:
+                            print("found laughter")
                         transcription.append(current_speech)
                     # we use end as start since start isn't accurate
                     current_speech = [name, word.end - 0.5, word.end, word.word]
@@ -64,10 +79,10 @@ def transcribe(individuals, word_pause=1):
         if current_speech[3] != "":
             transcription.append(current_speech)
         print(f"finished transcribing {name}")
-        os.remove("temp.mp3")
+        os.remove("temp.wav")
 
     transcription.sort(key=lambda x: x[1])
 
     with open("transcript.txt", "w") as file:
         for entry in transcription:
-            file.write(f"[{_format_seconds(entry[1])}] {entry[0]}: {entry[3]}\n")
+            file.write(_format_chat(entry))

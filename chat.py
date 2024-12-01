@@ -20,7 +20,7 @@ def chat_with_transcript(question, model="llama3.2-vision"):
             },
             {
                 "role": "user",
-                "content": f"Here is a transcript of a podcast episode: \n```\n{chat_log}\n```\n\n{question}",
+                "content": f"Here is a transcript of a podcast episode: \n\n```\n{chat_log}\n```\n\n{question}",
             },
         ],
     )
