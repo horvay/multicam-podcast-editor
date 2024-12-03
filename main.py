@@ -1,9 +1,14 @@
-import glob
 import argparse
+import glob
 
+from analyze_video import analyze
 from chat import chat_with_transcript
 from multicam import multicam
+from short_creator import shortcut
+from tprint import print_decorator
 from transcribe import transcribe
+
+print = print_decorator(print)
 
 parser = argparse.ArgumentParser(
     description="A cli to automatically multicam edit, jump cut, transcribe and interact with your podcast with an LLM"
@@ -22,34 +27,61 @@ parser.add_argument(
     help="transcribe the podcast to a text file",
 )
 parser.add_argument(
-    "-w",
-    "--word-pause",
-    type=float,
-    help="The length of time between words to detect a new line in the transcript. Defaults to 1.0",
-    default=1.0,
+    "-sb",
+    "--skip-bitrate-sync",
+    action="store_true",
+    help="by default the audio bitrates of each file will be made the same",
+)
+parser.add_argument(
+    "-n",
+    "--threads",
+    type=int,
+    help="the amount of threads to use for certain task when generating video or audio. Defaults to 10",
+    default=10,
 )
 parser.add_argument(
     "-s",
-    "--screenshares",
-    metavar="true",
-    type=bool,
-    help="if set it will focus less on individuals during screen shares, default to true",
-    default=True,
+    "--short",
+    type=int,
+    help="Create a short starting at this second for 1 minute or until --till is set. Ex: --short 127 --till 148 (ie, create a 21 second short starting at 127 seconds in until 148s)",
+)
+parser.add_argument(
+    "-ti",
+    "--till",
+    type=int,
+    help="When to stop generating the short. If not set, then a short will default to 1 minute. Ex: --short 127 --till 148 (ie, create a 21 second short starting at 127 seconds in until 148s)",
+)
+parser.add_argument(
+    "-w",
+    "--word-pause",
+    type=float,
+    help="The length of time between words to detect a new line in the transcript. Defaults to 1.2",
+    default=1.2,
+)
+parser.add_argument(
+    "-is",
+    "--ignore-screenshares",
+    action="store_true",
+    help="by default when the screen is shared more emphasis will be put on the group video with the scerenshare. Requires putting the screenshare files in the same directory",
 )
 parser.add_argument(
     "-a",
     "--align-videos",
-    type=bool,
-    metavar="true",
+    action="store_true",
     help="align videos based on volumes",
     default=True,
 )
 parser.add_argument(
+    "-cc",
+    "--use-align-cache",
+    action="store_true",
+    help="Clear the cache of the alignment data. This should be true whenever processing new videos, but can save time if processing the same videos. Default: true",
+)
+parser.add_argument(
     "-hd",
     "--hi-def",
-    type=bool,
-    metavar="true",
-    help="if using the auto jump cuts, set the output to 1080p. Defaults to true",
+    action="store_true",
+    help="set the output to 1080p. Defaults to true",
     default=True,
 )
 parser.add_argument(
@@ -70,12 +102,26 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+print(args)
+
 individuals = glob.glob("person*.mp4") + glob.glob("*webcam*.mp4")
 screenshares = glob.glob("*screen*.mp4")
 all_people = ["main.mp4"] + individuals
 
+average_volumes = []
+vids = []
+if args.multicam or args.short is not None:
+    vids, average_volumes = analyze(
+        all_people, args.align_videos, args.use_align_cache, args.skip_bitrate_sync
+    )
+
 if args.multicam:
-    multicam(all_people, screenshares, args.jump_cuts, args.hi_def)
+    multicam(
+        screenshares, args.jump_cuts, vids, average_volumes, args.hi_def, args.threads
+    )
+
+if args.short is not None:
+    shortcut(vids, average_volumes, args.short, args.till, args.jump_cuts, args.threads)
 
 if args.transcribe:
     transcribe(individuals, args.word_pause)
