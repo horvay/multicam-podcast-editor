@@ -1,5 +1,6 @@
 import argparse
 import glob
+from typing import List
 
 from analyze_video import analyze
 from chat import chat_with_transcript
@@ -9,6 +10,26 @@ from tprint import print_decorator
 from transcribe import transcribe
 
 print = print_decorator(print)
+
+
+def parse_time_pairs(arg_strings: List[str]):
+    times = []
+    for pair in arg_strings:
+        try:
+            start = 0.0
+            stop = 0.0
+            start, stop = map(float, pair.split(","))
+            if stop <= start:
+                raise ValueError("Stop time must be greater than start time")
+            times.append((start, stop))
+        except ValueError as e:
+            raise argparse.ArgumentTypeError(
+                f"Invalid time pair format. {e} - on pair |{pair}| in {arg_strings}"
+            )
+    return times
+
+
+# Add an argument that can take multiple pairs of floats
 
 parser = argparse.ArgumentParser(
     description="A cli to automatically multicam edit, jump cut, transcribe and interact with your podcast with an LLM"
@@ -50,6 +71,14 @@ parser.add_argument(
     "--till",
     type=int,
     help="When to stop generating the short. If not set, then a short will default to 1 minute. Ex: --short 127 --till 148 (ie, create a 21 second short starting at 127 seconds in until 148s)",
+)
+parser.add_argument(
+    "-c",
+    "--cut",
+    type=float,
+    nargs=2,
+    action="append",
+    help="Pairs of start and stop times in seconds to skip. Example: -c 1.0 2.0 -c 3.0 4.0",
 )
 parser.add_argument(
     "-w",
@@ -99,7 +128,6 @@ parser.add_argument(
     default="llama3.2-vision",
 )
 
-
 args = parser.parse_args()
 
 print(args)
@@ -121,7 +149,15 @@ if args.multicam:
     )
 
 if args.short is not None:
-    shortcut(vids, average_volumes, args.short, args.till, args.jump_cuts, args.threads)
+    shortcut(
+        vids,
+        average_volumes,
+        args.short,
+        args.till,
+        args.cut,
+        args.jump_cuts,
+        args.threads,
+    )
 
 if args.transcribe:
     transcribe(individuals, args.word_pause)

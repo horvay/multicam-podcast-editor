@@ -1,6 +1,6 @@
 import math
 import subprocess
-from typing import List
+from typing import List, Tuple
 
 from tprint import print_decorator
 
@@ -19,20 +19,24 @@ print = print_decorator(print)
 def shortcut(
     vids: List[VideoClip],
     average_volumes: List[List[float]],
-    start: int,
+    short_start: int,
     till: int,
+    skip: List[Tuple[float, float]],
     enable_jumpcuts=True,
     threads=10,
 ):
-    till = till or (start + 60)
+    till = till or (short_start + 60)
 
     people_vols = average_volumes[1:]
     people = vids[1:]
 
     final_clips: List[VideoClip] = []
 
-    start_interval = math.floor(start / 5)
+    start_interval = math.floor(short_start / 5)
     end_interval = math.ceil(till / 5)
+
+    padd_start = short_start - start_interval * 5
+    padd_end = end_interval * 5 - till
 
     # going through every 5 seconds of the audio clips.
     for i in range(start_interval, end_interval):
@@ -71,7 +75,20 @@ def shortcut(
         [v.subclip(start_interval * 5, end_interval * 5).audio for v in people]  # pyright: ignore
     )
 
-    final2: VideoClip = final.set_audio((final_audio))  # pyright: ignore
+    final2 = final.set_audio((final_audio))  # pyright: ignore
+    final2: VideoClip = final2.subclip(padd_start, -padd_end)  # pyright: ignore
+
+    total_removed = 0
+    for start, end in skip:
+        start: float = start - total_removed
+        end: float = end - total_removed
+
+        before_cut = final2.subclip(0, start)
+        after_cut = final2.subclip(end)  # pyright: ignore
+        final2: VideoClip = concatenate_videoclips([before_cut, after_cut])
+
+        total_removed = total_removed + end - start
+
     final2.write_videofile(
         "short.mp4", threads=threads, codec="libx264", preset="slow", bitrate="3000k"
     )
