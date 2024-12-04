@@ -17,6 +17,7 @@ I've created a tool to automatically do the following things:
 3. Use jump cutting to remove dead air
 4. Transcribe the video using the individuals' videos
 5. The ability to ask an LLM about your podcast/video transcription
+6. Create shorts given a time range
 
 ## Dependencies
 
@@ -75,6 +76,12 @@ python main.py --multicam --jump-cuts --transcribe --question "what are some goo
 ```
 
 This would give you the final edited video outputted to the directory, a transcript.txt file, and it would output the console the response to your question, using an ollama LLM (llama3.2 by default)
+
+The following will create a short from the videos in the directory, starting at second 1705 until second 1812, it'll remove the deadair and will cut out seconds 50.1-67.0, 88.5-96.0, etc.
+
+```python
+python main.py -s 1705 -ti 1812 --jump-cuts -c 50.1 67.0 -c 88.5 96.0 -c 9.5 103.0 
+```
 
 It will take quite some time to run but should give updates on it's progress.
 
