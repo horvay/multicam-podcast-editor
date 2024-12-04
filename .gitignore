@@ -2,3 +2,5 @@
 transcript.txt
 __pycache__
 *.txt
+*.gguf
+Modelfile

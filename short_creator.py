@@ -75,13 +75,15 @@ def shortcut(
         [v.subclip(start_interval * 5, end_interval * 5).audio for v in people]  # pyright: ignore
     )
 
-    final2 = final.set_audio((final_audio))  # pyright: ignore
-    final2: VideoClip = final2.subclip(padd_start, -padd_end)  # pyright: ignore
+    final2 = final.set_audio(final_audio)  # pyright: ignore
+    print(f"padding the video by {padd_start} and {-padd_end}")
+    final2: VideoClip = final2.subclip(padd_start, -padd_end if padd_end > 0 else None)  # pyright: ignore
 
     total_removed = 0
     for start, end in skip:
         start: float = start - total_removed
         end: float = end - total_removed
+        print(f"total time cut: {total_removed} so next cut is {start} till {end}")
 
         before_cut = final2.subclip(0, start)
         after_cut = final2.subclip(end)  # pyright: ignore
@@ -95,7 +97,7 @@ def shortcut(
 
     if enable_jumpcuts:
         command = (
-            "auto-editor short.mp4 --margin 0.2sec --no-open "
+            "auto-editor short.mp4 --margin 0.1sec --no-open "
             "--extras '-c:v libx264 -preset slow -b:v 3000k -maxrate 3000k -bufsize 6000k'"
         )
 
