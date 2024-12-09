@@ -2,3 +2,4 @@ moviepy
 numpy
 faster-whisper
 ollama
+ffmpeg-normalize

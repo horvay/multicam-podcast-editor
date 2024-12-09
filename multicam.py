@@ -78,7 +78,8 @@ def multicam(
                 for y, yvol in enumerate(people_vols):
                     if y == x:
                         continue
-                    if len(yvol) > i and len(xvol) > i and xvol[i] * 0.1 < yvol[i]:
+                    print(f"comparing higher vol {xvol[i]} to {yvol[i]}")
+                    if len(yvol) > i and len(xvol) > i and xvol[i] * 0.05 < yvol[i]:
                         is_louder = False
                         break
 

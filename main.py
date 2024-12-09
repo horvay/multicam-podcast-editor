@@ -3,6 +3,7 @@ import glob
 from typing import List
 
 from analyze_video import analyze
+from audio_enhancement import podcast_audio
 from chat import chat_with_transcript
 from multicam import multicam
 from short_creator import shortcut
@@ -40,6 +41,12 @@ parser.add_argument(
 )
 parser.add_argument(
     "-j", "--jump-cuts", action="store_true", help="do automatic jump cuts of dead air"
+)
+parser.add_argument(
+    "-au",
+    "--audio-podcast-enhancements",
+    action="store_true",
+    help="enhance the audio using some standard podcast audio filters",
 )
 parser.add_argument(
     "-t",
@@ -138,6 +145,10 @@ all_people = ["main.mp4"] + individuals
 
 average_volumes = []
 vids = []
+
+if args.audio_podcast_enhancements:
+    podcast_audio(all_people, args.threads)
+
 if args.multicam or args.short is not None:
     vids, average_volumes = analyze(
         all_people, args.align_videos, args.use_align_cache, args.skip_bitrate_sync
