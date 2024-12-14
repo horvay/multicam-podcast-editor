@@ -2,5 +2,6 @@
 transcript.txt
 __pycache__
 *.txt
+!inputfiles/input-files-here.txt
 *.gguf
 Modelfile
