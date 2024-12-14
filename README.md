@@ -23,13 +23,12 @@ I've created a tool to automatically do the following things:
 
 - ffmpeg
 - <https://github.com/WyattBlue/auto-editor>
-- <https://github.com/align-videos-by-sound/align-videos-by-sound>
 - For chat, install ollama
 
 ## installation
 
 1. Install ffmpeg and ensure it's in your path
-1. Install auto-editor and align-videos-by-sound as per their github page
+1. Install auto-editor as per their github page or by doing `pip install auto-editor`
 1. run the following
 
 ```bash
@@ -46,16 +45,18 @@ This tool assumes you have 2 or more files: a video with all the audio and video
 You will need to follow this naming exactly:
 
 - call the video with all the cameras and audios "main.mp4"
-- call each of the individuals' videos "person1.mp4", "person2.mp4", etc, or have the word "webcam" in the name. (this is because individual files in streamyard have the name webcam so I can just copy and paste them)
+- call each of the individuals' videos "person1.mp4", "person2.mp4", etc, or have the word "webcam" in the name. (This makes it easy for streamyard users so they can just copy and paste the files as is)
 - if you want to include screenshares, then copy those over and ensure they have the word "screen" in them.
 
-Ensure these videos are in the same directory as this tool, and that none of the files have parenthesis in them. align-videos-by-sound doesn't seem to handle ().
+Ensure these videos are in the `inputfiles` directory.
 
 Run the following for multicam editing
 
 ```bash
 python main.py --multicam
 ```
+
+If you want to enhance the audio quality of the output for shorts or multicam, you can add `-au`.
 
 or for transcribing
 
