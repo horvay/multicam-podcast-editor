@@ -3,7 +3,6 @@ from tprint import print_decorator
 from ffmpeg_normalize import FFmpegNormalize
 
 print = print_decorator(print)
-filters = "highpass=f=80, lowpass=f=15000, adeclick, firequalizer=gain_entry='entry(100,0); entry(125,-1); entry(160,-2); entry(200,2); entry(250,-2); entry(315,1); entry(400,-2); entry(500,-1); entry(630,-1); entry(700,-3); entry(800,-2); entry(1000,-1); entry(1250,-4); entry(1600,-3); entry(2000,0); entry(2500,-3); entry(3150,0); entry(3500,-3); entry(4000,0); entry(5000,-2); entry(6300,-3); entry(8000,-3); entry(10000,-3); entry(12500,-5); entry(16000,-5)', asendcmd=0 afftdn sn start, asendcmd=1 afftdn sn stop, afftdn=nr=20:nf=-55, deesser"
 
 
 def podcast_audio(vid_list, threads=10):
@@ -19,8 +18,7 @@ def podcast_audio(vid_list, threads=10):
             progress=True,
             audio_codec="aac",
             output_format="mp4",
-            pre_filter="acompressor=threshold=-12dB:ratio=3:attack=10:release=100,loudnorm=I=-14:LRA=7:TP=-1",
-            # post_filter="alimiter=limit=0.92:attack=1:release=50",
+            pre_filter="deesser,firequalizer=gain_entry='entry(100,0);entry(125,-2);entry(160,-6);entry(200,6);entry(250,-7);entry(315,3);entry(400,-8);entry(500,-4);entry(630,-2);entry(700,-11);entry(800,-6);entry(1000,-4);entry(1250,-14);entry(1600,-11);entry(2000,3);entry(2500,-10);entry(3150,-1);entry(3500,-12);entry(4000,-1);entry(5000,-6);entry(6300,-10);entry(8000,-10);entry(10000,-15);entry(12500,-20);entry(16000,-20)',acompressor=threshold=-12dB:ratio=3:attack=10:release=100,loudnorm=I=-14:LRA=7:TP=-1",
             extra_input_options=[
                 "-threads",
                 f"{threads}",
