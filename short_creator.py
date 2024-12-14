@@ -98,7 +98,8 @@ def shortcut(
     if enable_jumpcuts:
         command = (
             "auto-editor short.mp4 --margin 0.1sec --no-open "
-            "--extras '-c:v libx264 -preset slow -b:v 3000k -maxrate 3000k -bufsize 6000k'"
+            "--extras '-c:v libx264 -preset slow -b:v 3000k -maxrate 3000k -bufsize 6000k' "
+            "-o short-jumpcut.mp4"
         )
 
         subprocess.run(command, shell=True)

@@ -1,6 +1,8 @@
 import argparse
 import glob
+import os
 from typing import List
+
 
 from analyze_video import analyze
 from audio_enhancement import podcast_audio
@@ -108,12 +110,6 @@ parser.add_argument(
     default=True,
 )
 parser.add_argument(
-    "-cc",
-    "--use-align-cache",
-    action="store_true",
-    help="Clear the cache of the alignment data. This should be true whenever processing new videos, but can save time if processing the same videos. Default: true",
-)
-parser.add_argument(
     "-hd",
     "--hi-def",
     action="store_true",
@@ -139,19 +135,19 @@ args = parser.parse_args()
 
 print(args)
 
-individuals = glob.glob("person*.mp4") + glob.glob("*webcam*.mp4")
-screenshares = glob.glob("*screen*.mp4")
-all_people = ["main.mp4"] + individuals
+individuals = glob.glob("inputfiles/person*.mp4") + glob.glob("inputfiles/*webcam*.mp4")
+screenshares = glob.glob("inputfiles/*screen*.mp4")
+all_people = ["inputfiles/main.mp4"] + individuals
+print(all_people)
+
 
 average_volumes = []
 vids = []
 
-if args.audio_podcast_enhancements:
-    podcast_audio(all_people, args.threads)
 
 if args.multicam or args.short is not None:
     vids, average_volumes = analyze(
-        all_people, args.align_videos, args.use_align_cache, args.skip_bitrate_sync
+        all_people, args.align_videos, args.skip_bitrate_sync, args.threads
     )
 
 if args.multicam:
@@ -169,6 +165,25 @@ if args.short is not None:
         args.jump_cuts,
         args.threads,
     )
+
+# podcast_audio(["inputfiles/main2.mp4"], args.threads)
+
+if args.audio_podcast_enhancements:
+    vids_to_enhance: list[str] = []
+    if os.path.exists("final.mp4"):
+        vids_to_enhance.append("final.mp4")
+
+    if os.path.exists("short.mp4"):
+        vids_to_enhance.append("short.mp4")
+
+    if os.path.exists("final-jumpcut.mp4"):
+        vids_to_enhance.append("final-jumpcut.mp4")
+
+    if os.path.exists("short-jumpcut.mp4"):
+        vids_to_enhance.append("short-jumpcut.mp4")
+
+    podcast_audio(vids_to_enhance, args.threads)
+
 
 if args.transcribe:
     transcribe(individuals, args.word_pause)

@@ -1,8 +1,8 @@
-import json
 import os
 import subprocess
-from typing import List
+from typing import Dict, List
 
+import audalign as ad
 from tprint import print_decorator
 import numpy as np
 from moviepy.editor import (
@@ -16,27 +16,59 @@ from moviepy.editor import (
 print = print_decorator(print)
 
 
-def analyze(vid_list, align_videos=True, use_align_cache=True, skip_bitrate_sync=False):
+def padd_video_by(vid: VideoClip, padding: float):
+    silent_audio = vid.audio.subclip(0, padding)  # pyright: ignore
+
+    blank_clip = ColorClip(size=vid.size, color=(0, 0, 0), duration=padding)
+    blank_clip = blank_clip.set_audio(silent_audio)
+
+    return concatenate_videoclips([blank_clip, vid])
+
+
+def volume(array1):
+    return np.sqrt(((1.0 * array1) ** 2).mean())
+
+
+def add_second_to(file: str):
+    def cleanup_second():
+        if os.path.exists("list.txt"):
+            os.remove("list.txt")
+
+        if os.path.exists("second.mp4"):
+            os.remove("second.mp4")
+
+    cleanup_second()
+    # first add a second to the main video because sometimes it doesn't start first
+    command = f"ffmpeg -i {file} -t 1 -c:v copy second.mp4"
+    subprocess.run(command, shell=True)
+
+    with open("list.txt", "w") as filelist:
+        filelist.writelines(["file second.mp4\n", "file " + file])
+
+    command = f"ffmpeg -f concat -safe 0 -i list.txt -c copy output.mp4 && mv output.mp4 {file}"
+    subprocess.run(command, shell=True)
+    cleanup_second()
+
+
+def analyze(vid_list, align_videos=True, skip_bitrate_sync=False, threads=10):
     print("list of vids found to process" + str(vid_list))
+
+    add_second_to(vid_list[0])
 
     if os.path.exists("temp_video.mp4"):
         os.remove("temp_video.mp4")
 
     if not skip_bitrate_sync:
         for vid in vid_list:
-            command = f"ffmpeg -i {vid} -c:v copy -b:a 128k -ar 44100 -frame_size 1024 temp_video.mp4 && mv temp_video.mp4 {vid}"
+            command = f"ffmpeg -threads {threads} -filter_threads {threads} -filter_complex_threads {threads} -i {vid} -c:v copy -b:a 128k -ar 44100 -frame_size 1024 temp_video.mp4 && mv temp_video.mp4 {vid}"
             subprocess.run(command, shell=True)
 
     print("finished making all bit rates the same")
 
     vids: List[VideoClip] = []
 
-    def volume(array1):
-        return np.sqrt(((1.0 * array1) ** 2).mean())
-
-    for _, vid in enumerate(vid_list):
-        video = VideoFileClip(vid)
-        vids.append(video)
+    for vid in vid_list:
+        vids.append(VideoFileClip(vid))
 
     print("videos loaded")
 
@@ -44,43 +76,22 @@ def analyze(vid_list, align_videos=True, use_align_cache=True, skip_bitrate_sync
         #####################################################
         ### padd the person clips to align them to main vid #
         #####################################################
-        if not use_align_cache:
-            print("clearing cache before aligning videos")
-            command = " ".join(
-                ["alignment_info_by_sound_track --clear_cache --json"] + vid_list
-            )
-        else:
-            print("using cache for aligning videos")
-            command = " ".join(["alignment_info_by_sound_track --json"] + vid_list)
 
-        process = subprocess.Popen(
-            command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        correlation_rec = ad.CorrelationRecognizer()
+        result: Dict[str, float] = ad.target_align(  # pyright: ignore
+            vid_list[0], "./inputfiles", recognizer=correlation_rec
         )
-        stdout, _ = process.communicate()
+        print(result)
 
-        json_data = json.loads(stdout.decode("utf-8"))
-        for item in json_data["edit_list"]:
-            filename: str = os.path.basename(item[0])
-
-            if filename == "main.mp4":
+        for vid_index, vid in enumerate(vid_list):
+            if vid_index == 0:
+                vids[vid_index] = vids[vid_index].subclip(1)  # pyright: ignore
                 continue
 
-            padding: float = item[1]["pad"]
-            print("will pad " + str(padding) + " seconds to " + filename)
+            padding = result[vid.replace("inputfiles/", "")]
+            print("will pad " + str(padding) + " seconds to " + vid)
 
-            vid_index = vid_list.index(filename)
-            video_clip = vids[vid_index]
-
-            silent_audio = video_clip.audio.subclip(0, padding)  # pyright: ignore
-
-            blank_clip = ColorClip(
-                size=video_clip.size, color=(0, 0, 0), duration=padding
-            )
-            blank_clip = blank_clip.set_audio(silent_audio)
-
-            print("before: " + str(vids[vid_index].audio.duration))  # pyright: ignore
-            vids[vid_index] = concatenate_videoclips([blank_clip, video_clip])
-            print("after: " + str(vids[vid_index].audio.duration))  # pyright: ignore
+            vids[vid_index] = padd_video_by(vids[vid_index], padding).subclip(1)  # pyright: ignore
 
         print("finish syncing based on audio")
 

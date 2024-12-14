@@ -2,4 +2,5 @@ moviepy
 numpy
 faster-whisper
 ollama
+audalign
 ffmpeg-normalize
