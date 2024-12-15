@@ -63,7 +63,7 @@ parser.add_argument(
     help="by default the audio bitrates of each file will be made the same",
 )
 parser.add_argument(
-    "-n",
+    "-nt",
     "--threads",
     type=int,
     help="the amount of threads to use for certain task when generating video or audio. Defaults to 10",
@@ -124,6 +124,13 @@ parser.add_argument(
     default="",
 )
 parser.add_argument(
+    "-o",
+    "--output-name",
+    type=str,
+    help="The name of the file to generate in the output folder",
+    default="final",
+)
+parser.add_argument(
     "-mo",
     "--model",
     type=str,
@@ -144,6 +151,9 @@ print(all_people)
 average_volumes = []
 vids = []
 
+outputname = args.output_name or "final"
+
+os.makedirs("temp", exist_ok=True)
 
 if args.multicam or args.short is not None:
     vids, average_volumes = analyze(
@@ -152,7 +162,13 @@ if args.multicam or args.short is not None:
 
 if args.multicam:
     multicam(
-        screenshares, args.jump_cuts, vids, average_volumes, args.hi_def, args.threads
+        screenshares,
+        args.jump_cuts,
+        vids,
+        average_volumes,
+        args.hi_def,
+        args.threads,
+        args.output_name,
     )
 
 if args.short is not None:
@@ -164,23 +180,24 @@ if args.short is not None:
         args.cut,
         args.jump_cuts,
         args.threads,
+        args.output_name,
     )
 
 # podcast_audio(["inputfiles/main2.mp4"], args.threads)
 
 if args.audio_podcast_enhancements:
     vids_to_enhance: list[str] = []
-    if os.path.exists("final.mp4"):
-        vids_to_enhance.append("final.mp4")
+    if os.path.exists(f"output/{args.output_name}.mp4"):
+        vids_to_enhance.append(f"output/{args.output_name}.mp4")
 
-    if os.path.exists("short.mp4"):
-        vids_to_enhance.append("short.mp4")
+    if os.path.exists(f"output/{args.output_name}-short.mp4"):
+        vids_to_enhance.append(f"output/{args.output_name}-short.mp4")
 
-    if os.path.exists("final-jumpcut.mp4"):
-        vids_to_enhance.append("final-jumpcut.mp4")
+    if os.path.exists(f"output/{args.output_name}-jumpcut.mp4"):
+        vids_to_enhance.append(f"output/{args.output_name}-jumpcut.mp4")
 
-    if os.path.exists("short-jumpcut.mp4"):
-        vids_to_enhance.append("short-jumpcut.mp4")
+    if os.path.exists(f"output/{args.output_name}-short-jumpcut.mp4"):
+        vids_to_enhance.append(f"output/{args.output_name}-short-jumpcut.mp4")
 
     podcast_audio(vids_to_enhance, args.threads)
 

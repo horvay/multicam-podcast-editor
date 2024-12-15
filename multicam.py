@@ -12,7 +12,13 @@ from moviepy.editor import (
 
 
 def multicam(
-    screenshares, enable_jumpcuts, vids, average_volumes, res1080p=True, threads=10
+    screenshares,
+    enable_jumpcuts,
+    vids,
+    average_volumes,
+    res1080p=True,
+    threads=10,
+    output_name="final",
 ):
     print("list of vids screen shares to reduce focus on: " + str(screenshares))
 
@@ -113,7 +119,7 @@ def multicam(
     finalAudio = CompositeAudioClip([v.audio for v in vids[1:]])
     final2: VideoClip = final.set_audio(finalAudio)  # pyright: ignore
     final2.write_videofile(  # pyright: ignore
-        "final.mp4",
+        f"output/{output_name}.mp4",
         threads=threads,
         codec="libx264",
         audio_codec="aac",
@@ -124,9 +130,9 @@ def multicam(
     print(f"apply jumpcuts? {enable_jumpcuts}")
     if enable_jumpcuts:
         command = (
-            "auto-editor final.mp4 --margin 0.4sec --no-open "
+            f"auto-editor output/{output_name}.mp4 --margin 0.4sec --no-open "
             "--extras '-c:v libx264 -c:a aac -preset slow -b:v 3000k -maxrate 3000k -bufsize 6000k' "
-            "-o final-jumpcut.mp4"
+            f"-o output/{output_name}-jumpcut.mp4"
         )
 
         if res1080p:

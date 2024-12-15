@@ -24,6 +24,7 @@ def shortcut(
     skip: List[Tuple[float, float]],
     enable_jumpcuts=True,
     threads=10,
+    output_name="final",
 ):
     till = till or (short_start + 60)
 
@@ -92,14 +93,18 @@ def shortcut(
         total_removed = total_removed + end - start
 
     final2.write_videofile(
-        "short.mp4", threads=threads, codec="libx264", preset="slow", bitrate="3000k"
+        f"output/{output_name}-short.mp4",
+        threads=threads,
+        codec="libx264",
+        preset="slow",
+        bitrate="3000k",
     )
 
     if enable_jumpcuts:
         command = (
-            "auto-editor short.mp4 --margin 0.1sec --no-open "
+            f"auto-editor output/{output_name}-short.mp4 --margin 0.1sec --no-open "
             "--extras '-c:v libx264 -preset slow -b:v 3000k -maxrate 3000k -bufsize 6000k' "
-            "-o short-jumpcut.mp4"
+            f"-o output/{output_name}-short-jumpcut.mp4"
         )
 
         subprocess.run(command, shell=True)

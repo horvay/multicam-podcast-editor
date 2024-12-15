@@ -3,5 +3,6 @@ transcript.txt
 __pycache__
 *.txt
 !inputfiles/input-files-here.txt
+!outputfiles/output-is-here.txt
 *.gguf
 Modelfile

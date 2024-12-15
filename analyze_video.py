@@ -16,51 +16,52 @@ from moviepy.editor import (
 print = print_decorator(print)
 
 
-def padd_video_by(vid: VideoClip, padding: float):
-    silent_audio = vid.audio.subclip(0, padding)  # pyright: ignore
-
-    blank_clip = ColorClip(size=vid.size, color=(0, 0, 0), duration=padding)
-    blank_clip = blank_clip.set_audio(silent_audio)
-
-    return concatenate_videoclips([blank_clip, vid])
-
-
-def volume(array1):
-    return np.sqrt(((1.0 * array1) ** 2).mean())
-
-
-def add_second_to(file: str):
-    def cleanup_second():
-        if os.path.exists("list.txt"):
-            os.remove("list.txt")
-
-        if os.path.exists("second.mp4"):
-            os.remove("second.mp4")
-
-    cleanup_second()
-    # first add a second to the main video because sometimes it doesn't start first
-    command = f"ffmpeg -i {file} -t 1 -c:v copy second.mp4"
-    subprocess.run(command, shell=True)
-
-    with open("list.txt", "w") as filelist:
-        filelist.writelines(["file second.mp4\n", "file " + file])
-
-    command = f"ffmpeg -f concat -safe 0 -i list.txt -c copy output.mp4 && mv output.mp4 {file}"
-    subprocess.run(command, shell=True)
-    cleanup_second()
-
-
 def analyze(vid_list, align_videos=True, skip_bitrate_sync=False, threads=10):
     print("list of vids found to process" + str(vid_list))
 
-    add_second_to(vid_list[0])
+    ######### private functions ##############
 
-    if os.path.exists("temp_video.mp4"):
-        os.remove("temp_video.mp4")
+    def _padd_video_by(vid: VideoClip, padding: float):
+        silent_audio = vid.audio.subclip(0, padding)  # pyright: ignore
+
+        blank_clip = ColorClip(size=vid.size, color=(0, 0, 0), duration=padding)
+        blank_clip = blank_clip.set_audio(silent_audio)
+
+        return concatenate_videoclips([blank_clip, vid])
+
+    def _volume(array1):
+        return np.sqrt(((1.0 * array1) ** 2).mean())
+
+    def cleanup_second():
+        if os.path.exists("temp/list.txt"):
+            os.remove("temp/list.txt")
+
+        if os.path.exists("temp/second.mp4"):
+            os.remove("temp/second.mp4")
+
+    def _add_second_to(file: str):
+        cleanup_second()
+        # first add a second to the main video because sometimes it doesn't start first
+        command = f"ffmpeg -i {file} -t 1 -c:v copy temp/second.mp4"
+        subprocess.run(command, shell=True)
+
+        with open("temp/list.txt", "w") as filelist:
+            filelist.writelines(["file second.mp4\n", "file ../" + file])
+
+        command = f"ffmpeg -f concat -safe 0 -i temp/list.txt -c copy temp/output.mp4 && mv temp/output.mp4 {file}"
+        subprocess.run(command, shell=True)
+        cleanup_second()
+
+    #################################
+
+    _add_second_to(vid_list[0])
+
+    if os.path.exists("temp/temp_video.mp4"):
+        os.remove("temp/temp_video.mp4")
 
     if not skip_bitrate_sync:
         for vid in vid_list:
-            command = f"ffmpeg -threads {threads} -filter_threads {threads} -filter_complex_threads {threads} -i {vid} -c:v copy -b:a 128k -ar 44100 -frame_size 1024 temp_video.mp4 && mv temp_video.mp4 {vid}"
+            command = f"ffmpeg -threads {threads} -filter_threads {threads} -filter_complex_threads {threads} -i {vid} -c:v copy -b:a 128k -ar 44100 -frame_size 1024 temp/temp_video.mp4 && mv temp/temp_video.mp4 {vid}"
             subprocess.run(command, shell=True)
 
     print("finished making all bit rates the same")
@@ -91,7 +92,7 @@ def analyze(vid_list, align_videos=True, skip_bitrate_sync=False, threads=10):
             padding = result[vid.replace("inputfiles/", "")]
             print("will pad " + str(padding) + " seconds to " + vid)
 
-            vids[vid_index] = padd_video_by(vids[vid_index], padding).subclip(1)  # pyright: ignore
+            vids[vid_index] = _padd_video_by(vids[vid_index], padding).subclip(1)  # pyright: ignore
 
         print("finish syncing based on audio")
 
@@ -110,7 +111,7 @@ def analyze(vid_list, align_videos=True, skip_bitrate_sync=False, threads=10):
                 + aud.subclip(x + 4, x + 5).to_soundarray(fps=44100)  # pyright: ignore
             )
 
-            total_vol = volume(sum(vol)) / 5
+            total_vol = _volume(sum(vol)) / 5
             new_volume.append(total_vol)
             # print("vid_clips now has this many elements: " + str(len(vid_clips)))
             x = x + 5

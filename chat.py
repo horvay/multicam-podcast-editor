@@ -3,11 +3,13 @@ from ollama import chat
 
 
 def chat_with_transcript(question, model="llama3.2-vision"):
-    if not os.path.exists("transcript.txt"):
-        print("Either provide a transcript.txt file or use -t to generate one.")
+    if not os.path.exists("input/transcript.txt"):
+        print(
+            "Either provide a transcript.txt file or use -t to generate one and place it in your inputfiles folder"
+        )
         return
 
-    with open("transcript.txt", "r") as file:
+    with open("input/transcript.txt", "r") as file:
         chat_log = file.read()
 
     stream = chat(
