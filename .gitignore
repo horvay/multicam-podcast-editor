@@ -3,6 +3,9 @@ transcript.txt
 __pycache__
 *.txt
 !inputfiles/input-files-here.txt
+!requirements.txt
 !outputfiles/output-is-here.txt
 *.gguf
 Modelfile
+*.csv
+temp/*

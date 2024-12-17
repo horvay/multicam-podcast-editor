@@ -3,7 +3,7 @@ import re
 
 import torch
 from faster_whisper import WhisperModel
-from moviepy.editor import (
+from moviepy import (
     VideoFileClip,
 )
 

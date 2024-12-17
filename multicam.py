@@ -3,7 +3,7 @@ import re
 import subprocess
 from typing import List
 
-from moviepy.editor import (
+from moviepy import (
     CompositeAudioClip,
     VideoClip,
     VideoFileClip,

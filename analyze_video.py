@@ -5,7 +5,7 @@ from typing import Dict, List
 import audalign as ad
 from tprint import print_decorator
 import numpy as np
-from moviepy.editor import (
+from moviepy import (
     AudioClip,
     ColorClip,
     VideoClip,
@@ -25,7 +25,7 @@ def analyze(vid_list, align_videos=True, skip_bitrate_sync=False, threads=10):
         silent_audio = vid.audio.subclip(0, padding)  # pyright: ignore
 
         blank_clip = ColorClip(size=vid.size, color=(0, 0, 0), duration=padding)
-        blank_clip = blank_clip.set_audio(silent_audio)
+        blank_clip = blank_clip.with_audio(silent_audio)
 
         return concatenate_videoclips([blank_clip, vid])
 

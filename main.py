@@ -3,9 +3,9 @@ import glob
 import os
 from typing import List
 
-
 from analyze_video import analyze
 from audio_enhancement import podcast_audio
+from captioning import caption_video, transcribe_file
 from chat import chat_with_transcript
 from multicam import multicam
 from short_creator import shortcut
@@ -137,6 +137,23 @@ parser.add_argument(
     help="when asking a question, which model should be used? Defaults to llama3.2-vision",
     default="llama3.2-vision",
 )
+parser.add_argument(
+    "-tf",
+    "--transcribe-file",
+    metavar="file",
+    type=str,
+    help="transcribe a single file word by word usually to be used for generating lyrics on a video",
+    default="",
+)
+parser.add_argument(
+    "-cv",
+    "--caption-video",
+    type=str,
+    metavar="video",
+    help="the video to caption and csv with the same name as the video, so 'inputfiles/myvideo.mp4' would need inputfiles/myvideo.mp4.csv to exist",
+    default="",
+)
+
 
 args = parser.parse_args()
 
@@ -204,6 +221,12 @@ if args.audio_podcast_enhancements:
 
 if args.transcribe:
     transcribe(individuals, args.word_pause)
+
+if args.transcribe_file != "":
+    transcribe_file(args.transcribe_file)
+
+if args.caption_video != "":
+    caption_video(args.caption_video)
 
 if args.question != "":
     chat_with_transcript(args.question, args.model)

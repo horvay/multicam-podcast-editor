@@ -5,7 +5,7 @@ from typing import List, Tuple
 from tprint import print_decorator
 
 # import moviepy.video.fx.all as vfx
-from moviepy.editor import (
+from moviepy import (
     CompositeAudioClip,
     CompositeVideoClip,
     VideoClip,
@@ -54,7 +54,7 @@ def shortcut(
 
         print(f"comparing {sorted_vols[0][1]} to {sorted_vols[1][1]}")
         if len(top_indices) > 1 and sorted_vols[0][1] * 0.08 < sorted_vols[1][1]:
-            vid2 = people[top_indices[1]].subclip(sec, n_sec)
+            vid2 = people[top_indices[1]].subclipped(sec, n_sec)
 
         if vid2 is None:
             vid1 = vid1.resize(height=1920)  # pyright: ignore
@@ -86,7 +86,7 @@ def shortcut(
         end: float = end - total_removed
         print(f"total time cut: {total_removed} so next cut is {start} till {end}")
 
-        before_cut = final2.subclip(0, start)
+        before_cut = final2.subclipped(0, start)
         after_cut = final2.subclip(end)  # pyright: ignore
         final2: VideoClip = concatenate_videoclips([before_cut, after_cut])
 
