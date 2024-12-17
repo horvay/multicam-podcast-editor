@@ -150,7 +150,7 @@ parser.add_argument(
     "--caption-video",
     type=str,
     metavar="video",
-    help="the video to caption and csv with the same name as the video, so 'inputfiles/myvideo.mp4' would need inputfiles/myvideo.mp4.csv to exist",
+    help="the video to caption and csv with the same name as the video, so 'inputfiles/myvideo.mp4' would need inputfiles/myvideo.mp4.csv to exist. Use -tf to generate the csv",
     default="",
 )
 
