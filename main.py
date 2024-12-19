@@ -150,8 +150,16 @@ parser.add_argument(
     "--caption-video",
     type=str,
     metavar="video",
-    help="the video to caption and csv with the same name as the video, so 'inputfiles/myvideo.mp4' would need inputfiles/myvideo.mp4.csv to exist. Use -tf to generate the csv",
+    help="the video to caption and csv with the same name as the video, so 'inputfiles/myvideo.mp4' would need inputfiles/myvideo.mp4.csv to exist. Use -tf to generate the csv. Example: -cv 'inputfiles/myvideo.mp4'",
     default="",
+)
+parser.add_argument(
+    "-f",
+    "--font",
+    type=str,
+    metavar="FONT",
+    help="the font used for the captions. Unfortunately it needs to be the full path, like '/usr/share/fonts/opentype/urw-base35/NimbusMonoPS-Bold.otf' or some local otf file you've downloaded",
+    default="/usr/share/fonts/opentype/urw-base35/NimbusMonoPS-Bold.otf",
 )
 
 
@@ -226,7 +234,7 @@ if args.transcribe_file != "":
     transcribe_file(args.transcribe_file)
 
 if args.caption_video != "":
-    caption_video(args.caption_video)
+    caption_video(args.caption_video, args.font)
 
 if args.question != "":
     chat_with_transcript(args.question, args.model)

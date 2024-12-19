@@ -58,7 +58,7 @@ def transcribe_file(file: str):
         writer.writerows(transcription)
 
 
-def caption_video(file: str):
+def caption_video(file: str, font: str):
     with open(file + ".csv", mode="r") as csvfile:
         reader = csv.DictReader(csvfile)
         transcription: List[WordTranscript] = list(reader)  # pyright: ignore
@@ -72,7 +72,7 @@ def caption_video(file: str):
     current_width = margin
     for word in transcription:
         clip = TextClip(
-            "/usr/share/fonts/opentype/urw-base35/NimbusMonoPS-Bold.otf",
+            font,
             text=word["word"],
             method="label",
             stroke_color="black",
@@ -82,12 +82,19 @@ def caption_video(file: str):
             color="white",
         )
 
+        start = float(word["start"])
+        end = float(word["end"])
+        duration = end - start
+        if duration > 1.0:
+            start = end - 1.0
+            duration = 1.0
+
         if current_width + clip.size[0] > template_width:
             current_width = margin
             for textclip in current_line_clips:
                 text_clips.append(
                     textclip.with_duration(  # pyright: ignore
-                        float(word["start"]) - textclip.start + 0.5
+                        start - textclip.start + 0.5
                     ).with_effects(  # pyright: ignore
                         [
                             vfx.CrossFadeIn(0.5),
@@ -100,7 +107,7 @@ def caption_video(file: str):
 
         position = (current_width + 10, video.size[1] * 0.1)
         clip: TextClip = (
-            clip.with_position(position).with_start(word["start"])  # pyright: ignore
+            clip.with_position(position).with_start(start)  # pyright: ignore
         )
         clip.size = (clip.size[0], clip.size[1] * 2)
         current_line_clips.append(clip)
