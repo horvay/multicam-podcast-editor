@@ -154,12 +154,34 @@ parser.add_argument(
     default="",
 )
 parser.add_argument(
+    "-ct",
+    "--caption-type",
+    type=int,
+    metavar="caption_type",
+    help="the type of captions. 1: across the screen, 2: multiline",
+    default=1,
+)
+parser.add_argument(
     "-f",
     "--font",
     type=str,
     metavar="FONT",
     help="the font used for the captions. Unfortunately it needs to be the full path, like '/usr/share/fonts/opentype/urw-base35/NimbusMonoPS-Bold.otf' or some local otf file you've downloaded",
     default="/usr/share/fonts/opentype/urw-base35/NimbusMonoPS-Bold.otf",
+)
+parser.add_argument(
+    "-cwd",
+    "--caption-word-duration",
+    type=float,
+    help="The length of time a word displays. By default it stays until a line is completed.",
+    default=-1,
+)
+parser.add_argument(
+    "-fs",
+    "--font-size",
+    type=float,
+    help="The font size for captions",
+    default=60,
 )
 
 
@@ -234,7 +256,13 @@ if args.transcribe_file != "":
     transcribe_file(args.transcribe_file)
 
 if args.caption_video != "":
-    caption_video(args.caption_video, args.font)
+    caption_video(
+        args.caption_video,
+        args.font,
+        args.caption_word_duration,
+        args.font_size,
+        args.caption_type,
+    )
 
 if args.question != "":
     chat_with_transcript(args.question, args.model)
