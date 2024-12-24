@@ -37,9 +37,16 @@ def parse_time_pairs(arg_strings: List[str]):
 parser = argparse.ArgumentParser(
     description="A cli to automatically multicam edit, jump cut, transcribe and interact with your podcast with an LLM"
 )
-
 parser.add_argument(
     "-m", "--multicam", action="store_true", help="do automatic multicam edits"
+)
+parser.add_argument(
+    "-mm",
+    "--multicam-main-vid",
+    type=str,
+    metavar="video",
+    help="name of the main baseline video to use for the automatic multicam",
+    default="inputfiles/main.mp4",
 )
 parser.add_argument(
     "-j", "--jump-cuts", action="store_true", help="do automatic jump cuts of dead air"

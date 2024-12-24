@@ -7,6 +7,7 @@ inputfiles
 !requirements.txt
 outputfiles
 !outputfiles/output-is-here.txt
+*.mp4
 *.gguf
 Modelfile
 *.csv
