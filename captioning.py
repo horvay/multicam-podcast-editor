@@ -28,6 +28,8 @@ AVOID_LIST = {
     "by",
     "can",
     "could",
+    "came",
+    "come",
     "did",
     "do",
     "does",
@@ -138,7 +140,8 @@ class WordTranscript(TypedDict):
     word: str
 
 
-def word_timing_adjusted(word: WordTranscript):
+# This is because whisper's start time is not reliable and is sometimes way too early
+def _word_timing_adjusted(word: WordTranscript):
     start = float(word["start"])
     end = float(word["end"])
     duration = end - start
@@ -146,6 +149,20 @@ def word_timing_adjusted(word: WordTranscript):
         start = end - 1.2
 
     return start, end
+
+
+def _get_positon_param(pos_param: str):
+    coordinates = pos_param.split(",")
+    if len(coordinates) != 2:
+        raise Exception(
+            "invalid position parameter. Must be two values separated by a comma with the whole thing in quotes"
+        )
+    try:
+        x, y = int(coordinates[0]), int(coordinates[1])
+    except ValueError:
+        raise Exception("coordinates must be integers")
+
+    return (x, y)
 
 
 def transcribe_file(file: str):
@@ -159,7 +176,7 @@ def transcribe_file(file: str):
         "temp/temp.wav",
         suppress_tokens=[],
         language="en",
-        vad_filter=True,
+        # vad_filter=True,
         condition_on_previous_text=False,
         log_progress=True,
         beam_size=10,
@@ -190,10 +207,37 @@ def transcribe_file(file: str):
 def caption_video(
     file: str,
     font: str,
-    caption_word_duration: float,
     font_size: int,
+    caption_position: str,
     caption_type: int = 1,
 ):
+    # @@@@@ private functions #######
+
+    def _create_font_autoresize(size: int, word: str, max_width: int = 9999999):
+        clip = None
+        for i in range(10, -1, -1):
+            modifier = i / 10
+            clip = TextClip(
+                font,
+                text=word,
+                method="label",
+                stroke_color="black",
+                vertical_align="center",
+                stroke_width=5,
+                size=(None, size),
+                margin=(13, 0),
+                font_size=size * modifier,
+                color="white",
+            )
+
+            if clip.size[0] < max_width:
+                break
+
+        assert clip is not None
+        return clip
+
+    ################################
+
     with open(file + ".csv", mode="r") as csvfile:
         reader = csv.DictReader(csvfile)
         transcription: List[WordTranscript] = list(reader)  # pyright: ignore
@@ -203,33 +247,37 @@ def caption_video(
     text_clips: List[Clip.Clip] = []
 
     if caption_type == 1:
-        margin = video.size[0] * (0.1 if caption_word_duration <= 0 else 0.15)
-        template_width = video.size[0] - margin
+        if caption_position is None or caption_position == "":
+            xpos, ypos = video.size[0] * 0.1, video.size[1] * 0.1
+        else:
+            xpos, ypos = _get_positon_param(caption_position)
+
+        template_width = video.size[0] - xpos
         current_line_clips: List[TextClip] = []
-        x = margin
+        x = xpos
         for word in transcription:
+            clip = _create_font_autoresize(font_size, word["word"])
             clip = TextClip(
                 font,
                 text=word["word"],
                 method="label",
                 stroke_color="black",
                 stroke_width=5,
+                size=(None, font_size + 8),
                 margin=(0, 10),
                 font_size=font_size,
                 color="white",
             )
 
-            start, _ = word_timing_adjusted(word)
+            start, _ = _word_timing_adjusted(word)
 
             if x + clip.size[0] > template_width:
-                x = margin
+                x = xpos
                 for textclip in current_line_clips:
                     text_clips.append(
-                        textclip.with_duration(  # pyright: ignore
+                        textclip.with_duration(
                             start - textclip.start + 0.5
-                            if caption_word_duration <= 0
-                            else caption_word_duration
-                        ).with_effects(  # pyright: ignore
+                        ).with_effects(
                             [
                                 vfx.CrossFadeIn(0.5),
                                 vfx.CrossFadeOut(0.3),
@@ -239,73 +287,52 @@ def caption_video(
 
                 current_line_clips = []
 
-            position = (x + 10, video.size[1] * 0.1)
-            clip: TextClip = (
-                clip.with_position(position).with_start(start)  # pyright: ignore
-            )
+            position = (x + 10, ypos)
+            clip: TextClip = clip.with_position(position).with_start(start)
             clip.size = (clip.size[0], clip.size[1] * 2)
             current_line_clips.append(clip)
             x = x + clip.size[0]
 
     if caption_type == 2:
         if video.size[0] > video.size[1]:
-            width, height = int(video.size[0] * 0.3), int(video.size[1] * 0.5)
+            width, height = int(video.size[0] * 0.3), int(video.size[1] * 0.34)
         else:
-            width, height = int(video.size[0] * 0.5), int(video.size[1] * 0.3)
+            width, height = int(video.size[0] * 0.4), int(video.size[1] * 0.3)
 
-        font_max = 120
+        font_max = font_size * 2
         fonts = [int(font_max * 0.45), int(font_max * 0.65), font_max]
-
-        def create_font(size: int, word: str, max_width: int):
-            clip = None
-            for i in range(10, -1, -1):
-                modifier = i / 10
-                clip = TextClip(
-                    font,
-                    text=word,
-                    method="label",
-                    stroke_color="black",
-                    vertical_align="center",
-                    stroke_width=5,
-                    size=((None, size)),
-                    margin=(13, 0),
-                    font_size=size * modifier,
-                    color="white",
-                )
-
-                if clip.size[0] < max_width:
-                    break
-
-            assert clip is not None
-            return clip
 
         y = 0
         x = 0
         current_line: List[TextClip] = []
 
-        def new_font_size(word: str):
+        def _new_font_size(word: str):
             rand = random.random()
             if word.lower() in AVOID_LIST:
                 # print(f"avoided {text} since it is common")
                 return fonts[0] if rand < 0.6 else fonts[1]
             else:
-                return fonts[0] if rand < 0.4 else fonts[1] if rand < 0.60 else fonts[2]
+                return fonts[0] if rand < 0.4 else fonts[1] if rand < 0.65 else fonts[2]
 
-        font_size = fonts[1]
+        if caption_position is None or caption_position == "":
+            xpos, ypos = 220, 60
+        else:
+            xpos, ypos = _get_positon_param(caption_position)
+
+        new_font_size = fonts[1]
         for word in transcription:
             text = word["word"].strip()
 
-            start, _ = word_timing_adjusted(word)
-
-            clip = create_font(font_size, text, width)
+            start, _ = _word_timing_adjusted(word)
+            clip = _create_font_autoresize(new_font_size, text, width)
 
             reset = False
             if x > 0:  # always print text if at the beginnig of line
                 if x + clip.size[0] > width:
                     y = y + clip.size[1] + 5
                     x = 0
-                    font_size = new_font_size(text)
-                    clip = create_font(font_size, text, width)
+                    new_font_size = _new_font_size(text)
+                    clip = _create_font_autoresize(new_font_size, text, width)
 
                 if y + clip.size[1] > height:
                     reset = True
@@ -325,20 +352,12 @@ def caption_video(
 
                     current_line = []
                     x, y = 0, 0
-                    font_size = new_font_size(text)
-                    clip = create_font(font_size, text, width)
+                    new_font_size = _new_font_size(text)
+                    clip = _create_font_autoresize(new_font_size, text, width)
 
-            clip = clip.with_position((x + 100, y + 100)).with_start(start)
+            clip = clip.with_position((x + xpos, y + ypos)).with_start(start)
             x = x + clip.size[0]
             current_line.append(clip)
-
-        # caption_container = CompositeVideoClip([container] + text_clips)
-        # # caption_container.write_videofile("output/test.mp4", fps=video.fps)
-        # text_clips = [
-        #     caption_container.with_position(
-        #         (int(video.size[0] * 0.1), int(video.size[1] * 0.1))
-        #     )
-        # ]
 
     else:
         raise Exception("Not supported caption type")

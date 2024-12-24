@@ -170,18 +170,19 @@ parser.add_argument(
     default="/usr/share/fonts/opentype/urw-base35/NimbusMonoPS-Bold.otf",
 )
 parser.add_argument(
-    "-cwd",
-    "--caption-word-duration",
-    type=float,
-    help="The length of time a word displays. By default it stays until a line is completed.",
-    default=-1,
-)
-parser.add_argument(
     "-fs",
     "--font-size",
     type=float,
     help="The font size for captions",
     default=60,
+)
+parser.add_argument(
+    "-cp",
+    "--caption-position",
+    type=str,
+    metavar='"x, y"',
+    help='The top left corner in pixels to place the captions, like -cp "200, 100" would be 200 pixels over, 100 pixels down',
+    default="",
 )
 
 
@@ -259,8 +260,8 @@ if args.caption_video != "":
     caption_video(
         args.caption_video,
         args.font,
-        args.caption_word_duration,
         args.font_size,
+        args.caption_position,
         args.caption_type,
     )
 
