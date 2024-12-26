@@ -4,3 +4,4 @@ faster-whisper
 ollama
 audalign
 ffmpeg-normalize
+torch

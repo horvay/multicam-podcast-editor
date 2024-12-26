@@ -18,7 +18,11 @@ print = print_decorator(print)
 
 
 def analyze(
-    vid_list: List[str], align_videos=True, skip_bitrate_sync=False, threads=10
+    vid_list: List[str],
+    max_time: float,
+    align_videos=True,
+    skip_bitrate_sync=False,
+    threads=10,
 ):
     print("list of vids found to process" + str(vid_list))
 
@@ -78,9 +82,9 @@ def analyze(
         config.multiprocessing = False
         correlation_rec = ad.CorrelationRecognizer(config)
 
-        result: Dict[str, float] = ad.target_align(  # # pyright: ignore
+        result: Dict[str, float] = ad.target_align(  # pyright: ignore
             target_file=vid_list[0],
-            directory_path="./inputfiles",
+            directory_path="./temp",
             recognizer=correlation_rec,
         )
 
@@ -99,7 +103,7 @@ def analyze(
                 vids[vid_index] = vids[vid_index].subclipped(1)
                 continue
 
-            padding = result[vid.replace("inputfiles/", "")]  # pyright: ignore
+            padding = result[vid.replace("temp/", "")]  # pyright: ignore
             print("will pad " + str(padding) + " seconds to " + vid)
 
             vids[vid_index] = _padd_video_by(vids[vid_index], padding).subclipped(1)

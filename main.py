@@ -1,7 +1,9 @@
 import argparse
 from glob import glob
 import os
+import subprocess
 from typing import List
+import shutil
 
 from analyze_video import analyze
 from audio_enhancement import podcast_audio
@@ -86,13 +88,13 @@ parser.add_argument(
 parser.add_argument(
     "-s",
     "--short",
-    type=int,
+    type=float,
     help="Create a short starting at this second for 1 minute or until --till is set. Ex: --short 127 --till 148 (ie, create a 21 second short starting at 127 seconds in until 148s)",
 )
 parser.add_argument(
     "-ti",
     "--till",
-    type=int,
+    type=float,
     help="When to stop generating the short. If not set, then a short will default to 1 minute. Ex: --short 127 --till 148 (ie, create a 21 second short starting at 127 seconds in until 148s)",
 )
 parser.add_argument(
@@ -211,7 +213,46 @@ else:
 
 screenshares = glob("inputfiles/*screen*.mp4")
 
+#### Clean up files in temp and copy input files as needed
+
+
+def clear_temp_folder():
+    if os.path.exists("temp"):
+        for filename in os.listdir("temp"):
+            file_path = os.path.join("temp", filename)
+            os.unlink(file_path)  # unlink also deletes
+
+
+clear_temp_folder()
+
+os.makedirs("temp", exist_ok=True)
+
+
+def _copy_to_temp(file: str):
+    new_file = "temp/" + os.path.basename(file)
+    shutil.copy(file, new_file)
+    return new_file
+
+
+if args.multicam or args.short is not None:
+    new_file = _copy_to_temp(args.multicam_main_vid)
+    args.multicam_main_vid = new_file
+
+    for i, vid in enumerate(individuals):
+        new_file = _copy_to_temp(vid)
+        individuals[i] = new_file
+
+##################################################
+
 all_people = [args.multicam_main_vid] + individuals
+
+if args.short is not None:
+    max_time = args.till or args.short + 180
+    print(f"trimming until time {max_time+10}s")
+    for vid in all_people:
+        command = f"ffmpeg -i {vid} -t {max_time + 10} -c copy temp/output.mp4 && mv temp/output.mp4 {vid}"
+        subprocess.run(command, shell=True)
+
 print(all_people)
 
 
@@ -220,11 +261,13 @@ vids = []
 
 outputname = args.output_name or "final"
 
-os.makedirs("temp", exist_ok=True)
-
 if args.multicam or args.short is not None:
+    max_time = -1
+    if args.short is not None:
+        max_time = args.till or args.short + 180
+
     vids, average_volumes = analyze(
-        all_people, args.align_videos, args.skip_bitrate_sync, args.threads
+        all_people, max_time, args.align_videos, args.skip_bitrate_sync, args.threads
     )
 
 if args.multicam:
@@ -249,8 +292,6 @@ if args.short is not None:
         args.threads,
         args.output_name,
     )
-
-# podcast_audio(["inputfiles/main2.mp4"], args.threads)
 
 if args.audio_podcast_enhancements:
     vids_to_enhance: list[str] = []

@@ -217,6 +217,10 @@ def caption_video(
         clip = None
         for i in range(10, -1, -1):
             modifier = i / 10
+
+            if i < 10:
+                print(f"resizing down {modifier}%")
+
             clip = TextClip(
                 font,
                 text=word,
@@ -308,7 +312,7 @@ def caption_video(
 
         def _new_font_size(word: str):
             rand = random.random()
-            if word.lower() in AVOID_LIST:
+            if word.lower().replace(",", "").replace(".", "") in AVOID_LIST:
                 # print(f"avoided {text} since it is common")
                 return fonts[0] if rand < 0.6 else fonts[1]
             else:
@@ -320,7 +324,7 @@ def caption_video(
             xpos, ypos = _get_positon_param(caption_position)
 
         new_font_size = fonts[1]
-        for word in transcription:
+        for wi, word in enumerate(transcription):
             text = word["word"].strip()
 
             start, _ = _word_timing_adjusted(word)
@@ -337,7 +341,7 @@ def caption_video(
                 if y + clip.size[1] > height:
                     reset = True
 
-                if reset:
+                if reset or wi == len(transcription) - 1:
                     for line_clip in current_line:
                         text_clips.append(
                             line_clip.with_duration(
@@ -356,6 +360,9 @@ def caption_video(
                     clip = _create_font_autoresize(new_font_size, text, width)
 
             clip = clip.with_position((x + xpos, y + ypos)).with_start(start)
+            # print(
+            #     f"Placing word '{text}' at time {start} so the clrip starts {clip.start}"
+            # )
             x = x + clip.size[0]
             current_line.append(clip)
 
