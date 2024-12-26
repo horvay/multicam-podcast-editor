@@ -3,6 +3,7 @@ import subprocess
 from typing import Dict, List
 
 import audalign as ad
+from audalign.recognizers.correcognize import CorrelationConfig
 from tprint import print_decorator
 import numpy as np
 from moviepy import (
@@ -16,13 +17,15 @@ from moviepy import (
 print = print_decorator(print)
 
 
-def analyze(vid_list, align_videos=True, skip_bitrate_sync=False, threads=10):
+def analyze(
+    vid_list: List[str], align_videos=True, skip_bitrate_sync=False, threads=10
+):
     print("list of vids found to process" + str(vid_list))
 
     ######### private functions ##############
 
     def _padd_video_by(vid: VideoClip, padding: float):
-        silent_audio = vid.audio.subclip(0, padding)  # pyright: ignore
+        silent_audio = vid.audio.subclipped(0, padding)  # pyright: ignore
 
         blank_clip = ColorClip(size=vid.size, color=(0, 0, 0), duration=padding)
         blank_clip = blank_clip.with_audio(silent_audio)
@@ -66,6 +69,23 @@ def analyze(vid_list, align_videos=True, skip_bitrate_sync=False, threads=10):
 
     print("finished making all bit rates the same")
 
+    if align_videos:
+        #####################################################
+        ### padd the person clips to align them to main vid #
+        #####################################################
+
+        config = CorrelationConfig()
+        config.multiprocessing = False
+        correlation_rec = ad.CorrelationRecognizer(config)
+
+        result: Dict[str, float] = ad.target_align(  # # pyright: ignore
+            target_file=vid_list[0],
+            directory_path="./inputfiles",
+            recognizer=correlation_rec,
+        )
+
+        print(result)
+
     vids: List[VideoClip] = []
 
     for vid in vid_list:
@@ -74,25 +94,15 @@ def analyze(vid_list, align_videos=True, skip_bitrate_sync=False, threads=10):
     print("videos loaded")
 
     if align_videos:
-        #####################################################
-        ### padd the person clips to align them to main vid #
-        #####################################################
-
-        correlation_rec = ad.CorrelationRecognizer()
-        result: Dict[str, float] = ad.target_align(  # pyright: ignore
-            vid_list[0], "./inputfiles", recognizer=correlation_rec
-        )
-        print(result)
-
         for vid_index, vid in enumerate(vid_list):
             if vid_index == 0:
-                vids[vid_index] = vids[vid_index].subclip(1)  # pyright: ignore
+                vids[vid_index] = vids[vid_index].subclipped(1)
                 continue
 
-            padding = result[vid.replace("inputfiles/", "")]
+            padding = result[vid.replace("inputfiles/", "")]  # pyright: ignore
             print("will pad " + str(padding) + " seconds to " + vid)
 
-            vids[vid_index] = _padd_video_by(vids[vid_index], padding).subclip(1)  # pyright: ignore
+            vids[vid_index] = _padd_video_by(vids[vid_index], padding).subclipped(1)
 
         print("finish syncing based on audio")
 
@@ -104,11 +114,11 @@ def analyze(vid_list, align_videos=True, skip_bitrate_sync=False, threads=10):
         aud: AudioClip = vid.audio  # pyright: ignore
         while x <= aud.duration - 5:
             vol = (
-                aud.subclip(x, x + 1).to_soundarray(fps=44100)  # pyright: ignore
-                + aud.subclip(x + 1, x + 2).to_soundarray(fps=44100)  # pyright: ignore
-                + aud.subclip(x + 2, x + 3).to_soundarray(fps=44100)  # pyright: ignore
-                + aud.subclip(x + 3, x + 4).to_soundarray(fps=44100)  # pyright: ignore
-                + aud.subclip(x + 4, x + 5).to_soundarray(fps=44100)  # pyright: ignore
+                aud.subclipped(x, x + 1).to_soundarray(fps=44100)
+                + aud.subclipped(x + 1, x + 2).to_soundarray(fps=44100)
+                + aud.subclipped(x + 2, x + 3).to_soundarray(fps=44100)
+                + aud.subclipped(x + 3, x + 4).to_soundarray(fps=44100)
+                + aud.subclipped(x + 4, x + 5).to_soundarray(fps=44100)
             )
 
             total_vol = _volume(sum(vol)) / 5

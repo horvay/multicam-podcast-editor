@@ -1,5 +1,5 @@
 import argparse
-import glob
+from glob import glob
 import os
 from typing import List
 
@@ -47,6 +47,13 @@ parser.add_argument(
     metavar="video",
     help="name of the main baseline video to use for the automatic multicam",
     default="inputfiles/main.mp4",
+)
+parser.add_argument(
+    "-mi",
+    "--multicam-input",
+    action="append",
+    nargs="+",
+    help="Used for adding individuals' videos in the multicam scenarios. Use -mm for the main video, and this for individual files. By default it looks for person*.mp4 or *webcam*.mp4 files. ex: -mi 'inputfiles/myperson1.mp4' -mi 'inputfiles/myperson2.mp4' etc",
 )
 parser.add_argument(
     "-j", "--jump-cuts", action="store_true", help="do automatic jump cuts of dead air"
@@ -179,7 +186,7 @@ parser.add_argument(
 parser.add_argument(
     "-fs",
     "--font-size",
-    type=float,
+    type=int,
     help="The font size for captions",
     default=60,
 )
@@ -197,9 +204,14 @@ args = parser.parse_args()
 
 print(args)
 
-individuals = glob.glob("inputfiles/person*.mp4") + glob.glob("inputfiles/*webcam*.mp4")
-screenshares = glob.glob("inputfiles/*screen*.mp4")
-all_people = ["inputfiles/main.mp4"] + individuals
+if args.multicam_input is not None and len(args.multicam_input) > 0:
+    individuals = sum(args.multicam_input, [])
+else:
+    individuals = glob("inputfiles/person*.mp4") + glob("inputfiles/*webcam*.mp4")
+
+screenshares = glob("inputfiles/*screen*.mp4")
+
+all_people = [args.multicam_main_vid] + individuals
 print(all_people)
 
 

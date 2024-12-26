@@ -12,9 +12,9 @@ from moviepy import (
 
 
 def multicam(
-    screenshares,
-    enable_jumpcuts,
-    vids,
+    screenshares: List[str],
+    enable_jumpcuts: bool,
+    vids: List[VideoClip],
     average_volumes,
     res1080p=True,
     threads=10,
@@ -45,12 +45,12 @@ def multicam(
             print(f"Time format not found in the screen file {ss}")
 
     secondsDiviedBy5: int = math.ceil(vids[0].audio.duration / 5)  # pyright: ignore
-    main = vids[0]
+    main: VideoClip = vids[0]
 
     people_vols = average_volumes[1:]
     people = vids[1:]
 
-    final_clips: List[VideoClip] = [main.subclip(0, 5)]  # pyright: ignore
+    final_clips: List[VideoClip] = [main.subclipped(0, 5)]
     unfocused_count: int = 0
     focused_count: int = 0
 
@@ -65,7 +65,9 @@ def multicam(
             if unfocused_count < 2 and start < sec < end:
                 print(f"interval {i} unfocussing due to screenshare")
                 final_clips.append(
-                    main.subclip(sec, n_sec if main.duration > n_sec else main.duration)  # pyright: ignore
+                    main.subclipped(
+                        sec, n_sec if main.duration > n_sec else main.duration
+                    )
                 )
                 unfocused_count = unfocused_count + 1
                 focused_count = 0
@@ -94,7 +96,7 @@ def multicam(
                         "interval " + str(i) + " had person " + str(x) + " greater vol"
                     )
                     final_clips.append(
-                        people[x].subclip(  # pyright: ignore
+                        people[x].subclipped(
                             sec,
                             n_sec if people[x].duration > n_sec else people[x].duration,
                         )
@@ -109,7 +111,7 @@ def multicam(
 
         print("interval " + str(i) + " had no greater person vol")
         final_clips.append(
-            main.subclip(sec, n_sec if main.duration > n_sec else main.duration)  # pyright: ignore
+            main.subclipped(sec, n_sec if main.duration > n_sec else main.duration)
         )
         unfocused_count = unfocused_count + 1
         focused_count = 0
@@ -117,8 +119,8 @@ def multicam(
     final = concatenate_videoclips(final_clips)
 
     finalAudio = CompositeAudioClip([v.audio for v in vids[1:]])
-    final2: VideoClip = final.set_audio(finalAudio)  # pyright: ignore
-    final2.write_videofile(  # pyright: ignore
+    final2: VideoClip = final.with_audio(finalAudio)
+    final2.write_videofile(
         f"output/{output_name}.mp4",
         threads=threads,
         codec="libx264",

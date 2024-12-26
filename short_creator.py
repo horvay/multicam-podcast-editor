@@ -21,7 +21,7 @@ def shortcut(
     average_volumes: List[List[float]],
     short_start: int,
     till: int,
-    skip: List[Tuple[float, float]],
+    skip: List[Tuple[float, float]] | None,
     enable_jumpcuts=True,
     threads=10,
     output_name="final",
@@ -49,7 +49,7 @@ def shortcut(
         sorted_vols = sorted(enumerate(vols), key=lambda x: x[1], reverse=True)
 
         top_indices = [index for index, _ in sorted_vols[:2]]
-        vid1: VideoClip = people[top_indices[0]].subclip(sec, n_sec)  # pyright: ignore
+        vid1: VideoClip = people[top_indices[0]].subclipped(sec, n_sec)  # pyright: ignore
         vid2 = None
 
         print(f"comparing {sorted_vols[0][1]} to {sorted_vols[1][1]}")
@@ -57,15 +57,15 @@ def shortcut(
             vid2 = people[top_indices[1]].subclipped(sec, n_sec)
 
         if vid2 is None:
-            vid1 = vid1.resize(height=1920)  # pyright: ignore
-            vid1 = vid1.set_position(("center", "top"))  # pyright: ignore
+            vid1 = vid1.resized(height=1920)  # pyright: ignore
+            vid1 = vid1.with_position(("center", "top"))  # pyright: ignore
             new_clip = CompositeVideoClip([vid1], size=(1080, 1920))
 
         else:
-            vid1 = vid1.resize(height=960)  # pyright: ignore
-            vid1 = vid1.set_position(("center", "top"))  # pyright: ignore
-            vid2 = vid2.resize(height=960)  # pyright: ignore
-            vid2 = vid2.set_position(("center", "bottom"))  # pyright: ignore
+            vid1 = vid1.resized(height=960)  # pyright: ignore
+            vid1 = vid1.with_position(("center", "top"))  # pyright: ignore
+            vid2 = vid2.resized(height=960)  # pyright: ignore
+            vid2 = vid2.with_position(("center", "bottom"))  # pyright: ignore
             new_clip = CompositeVideoClip([vid1, vid2], size=(1080, 1920))
 
         print(f"Iteration {i} using {"one" if vid2 is None else "two"} video")
@@ -73,24 +73,27 @@ def shortcut(
 
     final = concatenate_videoclips(final_clips)
     final_audio = CompositeAudioClip(
-        [v.subclip(start_interval * 5, end_interval * 5).audio for v in people]  # pyright: ignore
+        [v.subclipped(start_interval * 5, end_interval * 5).audio for v in people]
     )
 
-    final2 = final.set_audio(final_audio)  # pyright: ignore
+    final2 = final.with_audio(final_audio)
     print(f"padding the video by {padd_start} and {-padd_end}")
-    final2: VideoClip = final2.subclip(padd_start, -padd_end if padd_end > 0 else None)  # pyright: ignore
+    final2: VideoClip = final2.subclipped(
+        padd_start, -padd_end if padd_end > 0 else None
+    )
 
     total_removed = 0
-    for start, end in skip:
-        start: float = start - total_removed
-        end: float = end - total_removed
-        print(f"total time cut: {total_removed} so next cut is {start} till {end}")
+    if skip is not None:
+        for start, end in skip:
+            start: float = start - total_removed
+            end: float = end - total_removed
+            print(f"total time cut: {total_removed} so next cut is {start} till {end}")
 
-        before_cut = final2.subclipped(0, start)
-        after_cut = final2.subclip(end)  # pyright: ignore
-        final2: VideoClip = concatenate_videoclips([before_cut, after_cut])
+            before_cut = final2.subclipped(0, start)
+            after_cut = final2.subclipped(end)
+            final2: VideoClip = concatenate_videoclips([before_cut, after_cut])
 
-        total_removed = total_removed + end - start
+            total_removed = total_removed + end - start
 
     final2.write_videofile(
         f"output/{output_name}-short.mp4",

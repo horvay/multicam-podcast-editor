@@ -297,7 +297,7 @@ def caption_video(
         if video.size[0] > video.size[1]:
             width, height = int(video.size[0] * 0.3), int(video.size[1] * 0.34)
         else:
-            width, height = int(video.size[0] * 0.4), int(video.size[1] * 0.3)
+            width, height = int(video.size[0] * 0.6), int(video.size[1] * 0.33)
 
         font_max = font_size * 2
         fonts = [int(font_max * 0.45), int(font_max * 0.65), font_max]
@@ -344,8 +344,8 @@ def caption_video(
                                 start - line_clip.start + 0.7
                             ).with_effects(
                                 [
-                                    vfx.CrossFadeIn(1),
-                                    vfx.CrossFadeOut(0.6),
+                                    vfx.CrossFadeIn(0.5),
+                                    vfx.CrossFadeOut(0.5),
                                 ]
                             )
                         )
