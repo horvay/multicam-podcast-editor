@@ -217,10 +217,6 @@ def caption_video(
         clip = None
         for i in range(10, -1, -1):
             modifier = i / 10
-
-            if i < 10:
-                print(f"resizing down {modifier}%")
-
             clip = TextClip(
                 font,
                 text=word,
@@ -259,11 +255,11 @@ def caption_video(
         template_width = video.size[0] - xpos
         current_line_clips: List[TextClip] = []
         x = xpos
-        for word in transcription:
-            clip = _create_font_autoresize(font_size, word["word"])
+        for n_word in transcription:
+            clip = _create_font_autoresize(font_size, n_word["word"])
             clip = TextClip(
                 font,
-                text=word["word"],
+                text=n_word["word"],
                 method="label",
                 stroke_color="black",
                 stroke_width=5,
@@ -273,7 +269,7 @@ def caption_video(
                 color="white",
             )
 
-            start, _ = _word_timing_adjusted(word)
+            start, _ = _word_timing_adjusted(n_word)
 
             if x + clip.size[0] > template_width:
                 x = xpos
@@ -301,7 +297,7 @@ def caption_video(
         if video.size[0] > video.size[1]:
             width, height = int(video.size[0] * 0.3), int(video.size[1] * 0.34)
         else:
-            width, height = int(video.size[0] * 0.6), int(video.size[1] * 0.33)
+            width, height = int(video.size[0] * 0.4), int(video.size[1] * 0.3)
 
         font_max = font_size * 2
         fonts = [int(font_max * 0.45), int(font_max * 0.65), font_max]
@@ -312,7 +308,7 @@ def caption_video(
 
         def _new_font_size(word: str):
             rand = random.random()
-            if word.lower().replace(",", "").replace(".", "") in AVOID_LIST:
+            if word.lower() in AVOID_LIST:
                 # print(f"avoided {text} since it is common")
                 return fonts[0] if rand < 0.6 else fonts[1]
             else:
@@ -324,10 +320,15 @@ def caption_video(
             xpos, ypos = _get_positon_param(caption_position)
 
         new_font_size = fonts[1]
-        for wi, word in enumerate(transcription):
-            text = word["word"].strip()
 
-            start, _ = _word_timing_adjusted(word)
+        for word_index, n_word in enumerate(transcription):
+            p_word = transcription[word_index - 1] if word_index > 0 else None
+            text = n_word["word"].strip()
+
+            start, _ = _word_timing_adjusted(n_word)
+            p_start, p_end = (
+                _word_timing_adjusted(p_word) if p_word is not None else (0, 0)
+            )
             clip = _create_font_autoresize(new_font_size, text, width)
 
             reset = False
@@ -341,15 +342,18 @@ def caption_video(
                 if y + clip.size[1] > height:
                     reset = True
 
-                if reset or wi == len(transcription) - 1:
+                if len(current_line) > 0 and start - p_start > 1.0:
+                    reset = True
+
+                if reset:
                     for line_clip in current_line:
                         text_clips.append(
                             line_clip.with_duration(
-                                start - line_clip.start + 0.7
+                                p_end - line_clip.start + 0.7
                             ).with_effects(
                                 [
-                                    vfx.CrossFadeIn(0.5),
-                                    vfx.CrossFadeOut(0.5),
+                                    vfx.CrossFadeIn(1),
+                                    vfx.CrossFadeOut(0.6),
                                 ]
                             )
                         )
@@ -360,9 +364,6 @@ def caption_video(
                     clip = _create_font_autoresize(new_font_size, text, width)
 
             clip = clip.with_position((x + xpos, y + ypos)).with_start(start)
-            # print(
-            #     f"Placing word '{text}' at time {start} so the clrip starts {clip.start}"
-            # )
             x = x + clip.size[0]
             current_line.append(clip)
 
