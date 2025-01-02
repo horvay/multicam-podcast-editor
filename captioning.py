@@ -3,6 +3,7 @@ import os
 import random
 from typing import List, TypedDict
 
+from numpy.lib import math
 import torch
 from faster_whisper import WhisperModel
 from moviepy import (
@@ -145,8 +146,10 @@ def _word_timing_adjusted(word: WordTranscript):
     start = float(word["start"])
     end = float(word["end"])
     duration = end - start
-    if duration > 1.2:
-        start = end - 1.2
+    max_duration = math.log(len(word["word"]), 8)
+
+    if duration > max_duration:
+        start = end - max_duration
 
     return start, end
 
@@ -211,7 +214,7 @@ def caption_video(
     caption_position: str,
     caption_type: int = 1,
 ):
-    # @@@@@ private functions #######
+    # ##### private functions #######
 
     def _create_font_autoresize(size: int, word: str, max_width: int = 9999999):
         clip = None
@@ -225,7 +228,7 @@ def caption_video(
                 vertical_align="center",
                 stroke_width=5,
                 size=(None, size),
-                margin=(13, 0),
+                margin=(13, 2, 13, 2),
                 font_size=size * modifier,
                 color="white",
             )
@@ -294,6 +297,20 @@ def caption_video(
             x = x + clip.size[0]
 
     if caption_type == 2:
+        words_to_delete = []
+        for i, word in enumerate(transcription):
+            if i == 0:
+                continue
+
+            p_word = transcription[i - 1]
+            if word["word"].startswith("-"):
+                p_word["word"] = p_word["word"] + word["word"]
+                p_word["end"] = word["end"]
+                words_to_delete.append(word)
+
+        for word in words_to_delete:
+            transcription.remove(word)
+
         if video.size[0] > video.size[1]:
             width, height = int(video.size[0] * 0.3), int(video.size[1] * 0.34)
         else:
@@ -308,7 +325,7 @@ def caption_video(
 
         def _new_font_size(word: str):
             rand = random.random()
-            if word.lower() in AVOID_LIST:
+            if word.lower().replace(".", "").replace(",", "") in AVOID_LIST:
                 # print(f"avoided {text} since it is common")
                 return fonts[0] if rand < 0.6 else fonts[1]
             else:
@@ -321,11 +338,24 @@ def caption_video(
 
         new_font_size = fonts[1]
 
+        def _place_current_line(line: List[TextClip], end_time: float):
+            for line_clip in line:
+                text_clips.append(
+                    line_clip.with_duration(
+                        end_time - line_clip.start + 0.5
+                    ).with_effects(
+                        [
+                            vfx.CrossFadeIn(0.3),
+                            vfx.CrossFadeOut(0.3),
+                        ]
+                    )
+                )
+
         for word_index, n_word in enumerate(transcription):
             p_word = transcription[word_index - 1] if word_index > 0 else None
             text = n_word["word"].strip()
 
-            start, _ = _word_timing_adjusted(n_word)
+            start, end = _word_timing_adjusted(n_word)
             p_start, p_end = (
                 _word_timing_adjusted(p_word) if p_word is not None else (0, 0)
             )
@@ -346,18 +376,7 @@ def caption_video(
                     reset = True
 
                 if reset:
-                    for line_clip in current_line:
-                        text_clips.append(
-                            line_clip.with_duration(
-                                p_end - line_clip.start + 0.7
-                            ).with_effects(
-                                [
-                                    vfx.CrossFadeIn(1),
-                                    vfx.CrossFadeOut(0.6),
-                                ]
-                            )
-                        )
-
+                    _place_current_line(current_line, p_end)
                     current_line = []
                     x, y = 0, 0
                     new_font_size = _new_font_size(text)
@@ -366,6 +385,12 @@ def caption_video(
             clip = clip.with_position((x + xpos, y + ypos)).with_start(start)
             x = x + clip.size[0]
             current_line.append(clip)
+            if word_index == len(transcription) - 1 and len(current_line) > 0:
+                print(f"caught {len(current_line)} elements left at the end")
+                _place_current_line(
+                    current_line,
+                    p_end + 1.0 if p_end + 1.0 < video.duration else video.duration,
+                )
 
     else:
         raise Exception("Not supported caption type")
