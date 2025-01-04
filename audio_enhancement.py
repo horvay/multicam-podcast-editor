@@ -18,7 +18,7 @@ def podcast_audio(vid_list, threads=10):
             progress=True,
             audio_codec="aac",
             output_format="mp4",
-            pre_filter="deesser,firequalizer=gain_entry='entry(100,0);entry(125,-2);entry(160,-6);entry(200,6);entry(250,-7);entry(315,3);entry(400,-8);entry(500,-4);entry(630,-2);entry(700,-11);entry(800,-6);entry(1000,-4);entry(1250,-14);entry(1600,-11);entry(2000,3);entry(2500,-10);entry(3150,-1);entry(3500,-12);entry(4000,-1);entry(5000,-6);entry(6300,-10);entry(8000,-10);entry(10000,-15);entry(12500,-20);entry(16000,-20)',acompressor=threshold=-12dB:ratio=3:attack=10:release=100,loudnorm=I=-14:LRA=7:TP=-1",
+            pre_filter="deesser,firequalizer=gain_entry='entry(100,0);entry(125,-1);entry(160,-3);entry(200,3);entry(250,-4);entry(315,2);entry(400,-4);entry(500,-2);entry(630,-1);entry(700,-6);entry(800,-3);entry(1000,-2);entry(1250,-7);entry(1600,-6);entry(2000,2);entry(2500,-5);entry(3150,0);entry(3500,-6);entry(4000,0);entry(5000,-3);entry(6300,-5);entry(8000,-5);entry(10000,-8);entry(12500,-10);entry(16000,-10)',acompressor=threshold=-12dB:ratio=3:attack=10:release=100,loudnorm=I=-14:LRA=7:TP=-1",
             extra_input_options=[
                 "-threads",
                 f"{threads}",
