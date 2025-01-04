@@ -19,8 +19,8 @@ print = print_decorator(print)
 def shortcut(
     vids: List[VideoClip],
     average_volumes: List[List[float]],
-    short_start: int,
-    till: int,
+    short_start: float,
+    till: float | None,
     skip: List[Tuple[float, float]] | None,
     enable_jumpcuts=True,
     threads=10,

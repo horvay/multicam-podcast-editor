@@ -8,7 +8,7 @@ from moviepy import (
 )
 
 
-def transcribe(individuals, word_pause=1):
+def transcribe(individuals, word_pause=1.0):
     print("list of vids found to transcribe " + str(individuals))
 
     def _extract_name(file_name):

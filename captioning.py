@@ -211,7 +211,7 @@ def caption_video(
     file: str,
     font: str,
     font_size: int,
-    caption_position: str,
+    caption_position: tuple[int, int] | None,
     caption_type: int = 1,
 ):
     # ##### private functions #######
@@ -250,10 +250,10 @@ def caption_video(
     text_clips: List[Clip.Clip] = []
 
     if caption_type == 1:
-        if caption_position is None or caption_position == "":
+        if caption_position is None:
             xpos, ypos = video.size[0] * 0.1, video.size[1] * 0.1
         else:
-            xpos, ypos = _get_positon_param(caption_position)
+            xpos, ypos = caption_position
 
         template_width = video.size[0] - xpos
         current_line_clips: List[TextClip] = []
@@ -334,7 +334,7 @@ def caption_video(
         if caption_position is None or caption_position == "":
             xpos, ypos = 220, 60
         else:
-            xpos, ypos = _get_positon_param(caption_position)
+            xpos, ypos = caption_position
 
         new_font_size = fonts[1]
 

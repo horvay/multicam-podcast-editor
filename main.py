@@ -1,40 +1,11 @@
 import argparse
-from glob import glob
-import os
-import subprocess
-from typing import List
-import shutil
 
-from analyze_video import analyze
-from audio_enhancement import podcast_audio
-from captioning import caption_video, transcribe_file
-from chat import chat_with_transcript
-from multicam import multicam
-from short_creator import shortcut
+from args_parser import parse_cli_args
+from orchestrate import run
 from tprint import print_decorator
-from transcribe import transcribe
 
 print = print_decorator(print)
 
-
-def parse_time_pairs(arg_strings: List[str]):
-    times = []
-    for pair in arg_strings:
-        try:
-            start = 0.0
-            stop = 0.0
-            start, stop = map(float, pair.split(","))
-            if stop <= start:
-                raise ValueError("Stop time must be greater than start time")
-            times.append((start, stop))
-        except ValueError as e:
-            raise argparse.ArgumentTypeError(
-                f"Invalid time pair format. {e} - on pair |{pair}| in {arg_strings}"
-            )
-    return times
-
-
-# Add an argument that can take multiple pairs of floats
 
 parser = argparse.ArgumentParser(
     description="A cli to automatically multicam edit, jump cut, transcribe and interact with your podcast with an LLM"
@@ -56,6 +27,13 @@ parser.add_argument(
     action="append",
     nargs="+",
     help="Used for adding individuals' videos in the multicam scenarios. Use -mm for the main video, and this for individual files. By default it looks for person*.mp4 or *webcam*.mp4 files. ex: -mi 'inputfiles/myperson1.mp4' -mi 'inputfiles/myperson2.mp4' etc",
+)
+parser.add_argument(
+    "-si",
+    "--screenshare-input",
+    action="append",
+    nargs="+",
+    help="Used for adding screenshare videos used in the multicam scenarios. Use -mm for the main video, and this for screenshare files. By default it looks for *screenshare*.mp4 or *webcam*.mp4 files. ex: -si 'inputfiles/myscreen1.mp4' -si 'inputfiles/myscreen2.mp4' etc",
 )
 parser.add_argument(
     "-j", "--jump-cuts", action="store_true", help="do automatic jump cuts of dead air"
@@ -183,7 +161,7 @@ parser.add_argument(
     type=str,
     metavar="FONT",
     help="the font used for the captions. Unfortunately it needs to be the full path, like '/usr/share/fonts/opentype/urw-base35/NimbusMonoPS-Bold.otf' or some local otf file you've downloaded",
-    default="/usr/share/fonts/opentype/urw-base35/NimbusMonoPS-Bold.otf",
+    default="./FreeMonospacedBold.otf",
 )
 parser.add_argument(
     "-fs",
@@ -201,129 +179,11 @@ parser.add_argument(
     default="",
 )
 
-
 args = parser.parse_args()
 
 print(args)
 
-if args.multicam_input is not None and len(args.multicam_input) > 0:
-    individuals = sum(args.multicam_input, [])
-else:
-    individuals = glob("inputfiles/person*.mp4") + glob("inputfiles/*webcam*.mp4")
+options = parse_cli_args(args)
 
-screenshares = glob("inputfiles/*screen*.mp4")
-
-#### Clean up files in temp and copy input files as needed
-
-
-def clear_temp_folder():
-    if os.path.exists("temp"):
-        for filename in os.listdir("temp"):
-            file_path = os.path.join("temp", filename)
-            os.unlink(file_path)  # unlink also deletes
-
-
-clear_temp_folder()
-
-os.makedirs("temp", exist_ok=True)
-
-
-def _copy_to_temp(file: str):
-    new_file = "temp/" + os.path.basename(file)
-    shutil.copy(file, new_file)
-    return new_file
-
-
-if args.multicam or args.short is not None:
-    new_file = _copy_to_temp(args.multicam_main_vid)
-    args.multicam_main_vid = new_file
-
-    for i, vid in enumerate(individuals):
-        new_file = _copy_to_temp(vid)
-        individuals[i] = new_file
-
-##################################################
-
-all_people = [args.multicam_main_vid] + individuals
-
-if args.short is not None:
-    max_time = args.till or args.short + 180
-    print(f"trimming until time {max_time+10}s")
-    for vid in all_people:
-        command = f"ffmpeg -i {vid} -t {max_time + 10} -c copy temp/output.mp4 && mv temp/output.mp4 {vid}"
-        subprocess.run(command, shell=True)
-
-print(all_people)
-
-
-average_volumes = []
-vids = []
-
-outputname = args.output_name or "final"
-
-if args.multicam or args.short is not None:
-    max_time = -1
-    if args.short is not None:
-        max_time = args.till or args.short + 180
-
-    vids, average_volumes = analyze(
-        all_people, max_time, args.align_videos, args.skip_bitrate_sync, args.threads
-    )
-
-if args.multicam:
-    multicam(
-        screenshares,
-        args.jump_cuts,
-        vids,
-        average_volumes,
-        args.hi_def,
-        args.threads,
-        args.output_name,
-    )
-
-if args.short is not None:
-    shortcut(
-        vids,
-        average_volumes,
-        args.short,
-        args.till,
-        args.cut,
-        args.jump_cuts,
-        args.threads,
-        args.output_name,
-    )
-
-if args.audio_podcast_enhancements:
-    vids_to_enhance: list[str] = []
-    if os.path.exists(f"output/{args.output_name}.mp4"):
-        vids_to_enhance.append(f"output/{args.output_name}.mp4")
-
-    if os.path.exists(f"output/{args.output_name}-short.mp4"):
-        vids_to_enhance.append(f"output/{args.output_name}-short.mp4")
-
-    if os.path.exists(f"output/{args.output_name}-jumpcut.mp4"):
-        vids_to_enhance.append(f"output/{args.output_name}-jumpcut.mp4")
-
-    if os.path.exists(f"output/{args.output_name}-short-jumpcut.mp4"):
-        vids_to_enhance.append(f"output/{args.output_name}-short-jumpcut.mp4")
-
-    podcast_audio(vids_to_enhance, args.threads)
-
-
-if args.transcribe:
-    transcribe(individuals, args.word_pause)
-
-if args.transcribe_file != "":
-    transcribe_file(args.transcribe_file)
-
-if args.caption_video != "":
-    caption_video(
-        args.caption_video,
-        args.font,
-        args.font_size,
-        args.caption_position,
-        args.caption_type,
-    )
-
-if args.question != "":
-    chat_with_transcript(args.question, args.model)
+if __name__ == "__main__":
+    run(options)
