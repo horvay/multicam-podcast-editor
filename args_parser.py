@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import List, Tuple
+from dataclasses import dataclass, field
+from typing import ClassVar, List, Tuple
 from glob import glob
 
 
@@ -13,10 +13,10 @@ class Args:
     caption_video: str | None
     question: str | None
     caption_position: Tuple[int, int] | None
-    screenshare_input: List[str] = []
+    screenshare_input: List[str] = field(default_factory=list)
     jump_cuts: bool = False
     multicam_main_vid: str = "main.mp4"
-    multicam_input: List[str] = []
+    multicam_input: List[str] = field(default_factory=list)
     audio_enhancements: bool = False
     transcribe: bool = False
     skip_bitrate_sync: bool = False
@@ -60,13 +60,15 @@ def parse_cli_args(args):
     if args.multicam_input is not None and len(args.multicam_input) > 0:
         individuals: List[str] = sum(args.multicam_input, [])
     else:
-        individuals = glob("inputfiles/person*.mp4") + glob("inputfiles/*webcam*.mp4")
+        individuals: List[str] = glob("inputfiles/person*.mp4") + glob(
+            "inputfiles/*webcam*.mp4"
+        )
 
     return Args(
         multicam=args.multicam,
         multicam_main_vid=args.multicam_main_vid,
-        multicam_input=individuals,
-        screenshare_input=screenshares,
+        multicam_input=individuals,  # pyright: ignore
+        screenshare_input=screenshares,  # pyright: ignore
         short=args.short,
         till=args.till,
         cut=args.cut,
