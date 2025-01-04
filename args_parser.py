@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import ClassVar, List, Tuple
+from typing import List, Tuple
 from glob import glob
 
 
