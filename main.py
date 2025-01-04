@@ -178,6 +178,20 @@ parser.add_argument(
     help='The top left corner in pixels to place the captions, like -cp "200, 100" would be 200 pixels over, 100 pixels down',
     default="",
 )
+parser.add_argument(
+    "-cd",
+    "--collage-dir",
+    type=str,
+    metavar="DIR",
+    help="The directory with a bunch of jpg or png images that will be fadded in and out to create a video",
+)
+parser.add_argument(
+    "-ci",
+    "--collage-input",
+    type=str,
+    metavar="VIDEO",
+    help="the mp4 file to add the college to",
+)
 
 args = parser.parse_args()
 

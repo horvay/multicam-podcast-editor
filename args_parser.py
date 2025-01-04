@@ -13,6 +13,8 @@ class Args:
     caption_video: str | None
     question: str | None
     caption_position: Tuple[int, int] | None
+    collage_dir: str | None
+    collage_input: str | None
     screenshare_input: List[str] = field(default_factory=list)
     jump_cuts: bool = False
     multicam_main_vid: str = "main.mp4"
@@ -69,6 +71,8 @@ def parse_cli_args(args):
         multicam_main_vid=args.multicam_main_vid,
         multicam_input=individuals,  # pyright: ignore
         screenshare_input=screenshares,  # pyright: ignore
+        collage_dir=args.collage_dir,
+        collage_input=args.collage_input,
         short=args.short,
         till=args.till,
         cut=args.cut,
