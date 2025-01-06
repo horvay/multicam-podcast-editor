@@ -5,16 +5,16 @@ from glob import glob
 
 @dataclass
 class Args:
-    multicam: bool | None
-    short: float | None
-    till: float | None
-    cut: List[Tuple[float, float]] | None
-    transcribe_file: str | None
-    caption_video: str | None
-    question: str | None
-    caption_position: Tuple[int, int] | None
-    collage_dir: str | None
-    collage_input: str | None
+    multicam: bool = False
+    short: float = False
+    till: float | None = None
+    cut: List[Tuple[float, float]] | None = None
+    transcribe_file: str | None = None
+    caption_video: str | None = None
+    question: str | None = None
+    caption_position: Tuple[int, int] | None = None
+    collage_dir: str | None = None
+    collage_input: str | None = None
     screenshare_input: List[str] = field(default_factory=list)
     jump_cuts: bool = False
     multicam_main_vid: str = "main.mp4"
