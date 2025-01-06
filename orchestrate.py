@@ -7,6 +7,7 @@ from args_parser import Args
 from audio_enhancement import podcast_audio
 from captioning import caption_video, transcribe_file
 from chat import chat_with_transcript
+from collage import populate_file_with_images
 from multicam import multicam
 from short_creator import shortcut
 from transcribe import transcribe
@@ -28,6 +29,15 @@ def run(options: Args):
         new_file = "temp/" + os.path.basename(file)
         shutil.copy(file, new_file)
         return new_file
+
+    assert (options.collage_dir is None and options.collage_input is None) or (
+        options.collage_dir is not None and options.collage_input is not None
+    ), "collage-dir and collage-input must be used together"
+
+    if options.collage_input is not None and options.collage_dir is not None:
+        assert os.path.exists(options.collage_input), "collage-input does not exist"
+        assert os.path.exists(options.collage_dir), "collage-dir does not exist"
+        populate_file_with_images(options.collage_input, options.collage_dir)
 
     if options.multicam or options.short is not None:
         new_file = _copy_to_temp(options.multicam_main_vid)

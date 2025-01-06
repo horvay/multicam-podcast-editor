@@ -42,7 +42,7 @@ parser.add_argument(
     "-au",
     "--audio-podcast-enhancements",
     action="store_true",
-    help="enhance the audio using some standard podcast audio filters",
+    help="enhance the audio using some standard podcast audio filters. Will enhance anything in the output folder that is the --output-name or final.mp4 by default",
 )
 parser.add_argument(
     "-t",
@@ -121,7 +121,7 @@ parser.add_argument(
     "-o",
     "--output-name",
     type=str,
-    help="The name of the file to generate in the output folder",
+    help="The name of the file to generate in the output folder, without the extension",
     default="final",
 )
 parser.add_argument(

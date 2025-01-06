@@ -113,22 +113,11 @@ def analyze(
     print("Starting video chunking")
     average_volumes = []
     for i, vid in enumerate(vids):
-        x = 0
-        new_volume = []
         aud: AudioClip = vid.audio  # pyright: ignore
-        while x <= aud.duration - 5:
-            vol = (
-                aud.subclipped(x, x + 1).to_soundarray(fps=44100)
-                + aud.subclipped(x + 1, x + 2).to_soundarray(fps=44100)
-                + aud.subclipped(x + 2, x + 3).to_soundarray(fps=44100)
-                + aud.subclipped(x + 3, x + 4).to_soundarray(fps=44100)
-                + aud.subclipped(x + 4, x + 5).to_soundarray(fps=44100)
-            )
-
-            total_vol = _volume(sum(vol)) / 5
-            new_volume.append(total_vol)
-            # print("vid_clips now has this many elements: " + str(len(vid_clips)))
-            x = x + 5
+        new_volume = [
+            aud.subclipped(x, x + 5).max_volume()
+            for x in range(0, int(aud.duration - 5) + 1, 5)
+        ]
 
         average_volumes.append(new_volume)
         print(f"finished analyzing volume for video {i}")

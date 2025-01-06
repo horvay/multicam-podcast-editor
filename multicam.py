@@ -54,67 +54,49 @@ def multicam(
     unfocused_count: int = 0
     focused_count: int = 0
 
+    def _add_subclip(sec: float, n_sec: float, vid: VideoClip):
+        final_clips.append(
+            vid.subclipped(sec, n_sec if vid.duration > n_sec else vid.duration)
+        )
+
     # going through every 5 seconds of the audio clips.
     for i in range(1, secondsDiviedBy5):
         sec = i * 5
         n_sec = sec + 5
-        is_added = False
 
         # skip if in reduced focus times and we've been focused in the last 10 seconds
-        for start, end in reduced_focus_times:
-            if unfocused_count < 2 and start < sec < end:
-                print(f"interval {i} unfocussing due to screenshare")
-                final_clips.append(
-                    main.subclipped(
-                        sec, n_sec if main.duration > n_sec else main.duration
-                    )
-                )
-                unfocused_count = unfocused_count + 1
-                focused_count = 0
-                is_added = True
-                break
-
-        if is_added:
+        if unfocused_count < 2 and any(
+            start < sec < end for start, end in reduced_focus_times
+        ):
+            print(f"interval {i} unfocussing due to screenshare")
+            _add_subclip(sec, n_sec, main)
+            unfocused_count, focused_count = unfocused_count + 1, 0
             continue
 
         if focused_count < 2:
-            for x, xvol in enumerate(people_vols):
-                is_louder = True
-                if n_sec > people[x].duration:
-                    continue
+            current_iter_vols = [
+                xvol[i] if len(xvol) > i else -100 for xvol in people_vols
+            ]
+            sorted_vols = sorted(
+                enumerate(current_iter_vols), key=lambda x: x[1], reverse=True
+            )
 
-                for y, yvol in enumerate(people_vols):
-                    if y == x:
-                        continue
-                    print(f"comparing higher vol {xvol[i]} to {yvol[i]}")
-                    if len(yvol) > i and len(xvol) > i and xvol[i] * 0.05 < yvol[i]:
-                        is_louder = False
-                        break
+            first = sorted_vols[0]
+            second = sorted_vols[1] if len(sorted_vols) > 1 else None
+            print(
+                f"comparing {first[1]} to {second[1] if second is not None else "None"}"
+            )
 
-                if is_louder:
-                    print(
-                        "interval " + str(i) + " had person " + str(x) + " greater vol"
-                    )
-                    final_clips.append(
-                        people[x].subclipped(
-                            sec,
-                            n_sec if people[x].duration > n_sec else people[x].duration,
-                        )
-                    )
-                    is_added = True
-                    unfocused_count = 0
-                    focused_count = focused_count + 1
-                    break
-
-        if is_added:
-            continue
+            if second is None or first[1] * 0.05 > second[1]:  # pyright: ignore
+                assert len(sorted_vols) > 0
+                print(f"interval {str(i)} had person {str(first[0])} greater vol")
+                _add_subclip(sec, n_sec, people[first[0]])
+                unfocused_count, focused_count = 0, focused_count + 1
+                continue
 
         print("interval " + str(i) + " had no greater person vol")
-        final_clips.append(
-            main.subclipped(sec, n_sec if main.duration > n_sec else main.duration)
-        )
-        unfocused_count = unfocused_count + 1
-        focused_count = 0
+        _add_subclip(sec, n_sec, main)
+        unfocused_count, focused_count = unfocused_count + 1, 0
 
     final = concatenate_videoclips(final_clips)
 
