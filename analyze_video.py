@@ -45,14 +45,15 @@ def analyze(
     def _add_second_to(file: str):
         cleanup_second()
         # first add a second to the main video because sometimes it doesn't start first
-        print(f"adding 1 second to {file}")
-        command = f"ffmpeg -i {file} -t 1 -c:v copy temp/second.mp4"
+        command = f"ffmpeg -i '{file}' -t 1 -c:v copy temp/second.mp4"
+        print(f"running command {command}")
         subprocess.run(command, shell=True)
 
         with open("temp/list.txt", "w") as filelist:
             filelist.writelines(["file second.mp4\n", "file ../" + file])
 
-        command = f"ffmpeg -f concat -safe 0 -i temp/list.txt -c copy temp/output.mp4 && mv temp/output.mp4 {file}"
+        command = f"ffmpeg -f concat -safe 0 -i temp/list.txt -c copy temp/output.mp4 && mv temp/output.mp4 '{file}'"
+        print(f"running command {command}")
         subprocess.run(command, shell=True)
         cleanup_second()
 
@@ -66,7 +67,8 @@ def analyze(
     print(f"syncing the bit rate of the f8ollowing: {vid_list}")
     if not skip_bitrate_sync:
         for vid in vid_list:
-            command = f"ffmpeg -threads {threads} -filter_threads {threads} -filter_complex_threads {threads} -i {vid} -c:v copy -b:a 128k -ar 44100 -frame_size 1024 temp/temp_video.mp4 && mv temp/temp_video.mp4 {vid}"
+            command = f"ffmpeg -threads {threads} -filter_threads {threads} -filter_complex_threads {threads} -i '{vid}' -c:v copy -b:a 128k -ar 44100 -frame_size 1024 temp/temp_video.mp4 && mv temp/temp_video.mp4 '{vid}'"
+            print(f"running command {command}")
             subprocess.run(command, shell=True)
 
     print("finished making all bit rates the same")
