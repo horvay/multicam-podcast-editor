@@ -5,7 +5,6 @@ from typing import Dict, List
 import audalign as ad
 from audalign.recognizers.correcognize import CorrelationConfig
 from tprint import print_decorator
-import numpy as np
 from moviepy import (
     AudioClip,
     ColorClip,
@@ -36,9 +35,6 @@ def analyze(
 
         return concatenate_videoclips([blank_clip, vid])
 
-    def _volume(array1):
-        return np.sqrt(((1.0 * array1) ** 2).mean())
-
     def cleanup_second():
         if os.path.exists("temp/list.txt"):
             os.remove("temp/list.txt")
@@ -49,6 +45,7 @@ def analyze(
     def _add_second_to(file: str):
         cleanup_second()
         # first add a second to the main video because sometimes it doesn't start first
+        print(f"adding 1 second to {file}")
         command = f"ffmpeg -i {file} -t 1 -c:v copy temp/second.mp4"
         subprocess.run(command, shell=True)
 
@@ -66,6 +63,7 @@ def analyze(
     if os.path.exists("temp/temp_video.mp4"):
         os.remove("temp/temp_video.mp4")
 
+    print(f"syncing the bit rate of the f8ollowing: {vid_list}")
     if not skip_bitrate_sync:
         for vid in vid_list:
             command = f"ffmpeg -threads {threads} -filter_threads {threads} -filter_complex_threads {threads} -i {vid} -c:v copy -b:a 128k -ar 44100 -frame_size 1024 temp/temp_video.mp4 && mv temp/temp_video.mp4 {vid}"
