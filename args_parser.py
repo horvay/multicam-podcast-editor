@@ -6,7 +6,7 @@ from glob import glob
 @dataclass
 class Args:
     multicam: bool = False
-    short: float = False
+    short: float | None = None
     till: float | None = None
     cut: List[Tuple[float, float]] | None = None
     transcribe_file: str | None = None
