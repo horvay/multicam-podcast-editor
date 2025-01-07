@@ -130,5 +130,5 @@ def run(options: Args):
             options.caption_type,
         )
 
-    if options.question != "":
+    if options.question != "" and options.question is not None:
         chat_with_transcript(options.question, options.model)
