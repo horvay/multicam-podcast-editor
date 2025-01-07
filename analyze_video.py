@@ -50,7 +50,7 @@ def analyze(
         subprocess.run(command, shell=True)
 
         with open("temp/list.txt", "w") as filelist:
-            filelist.writelines(["file second.mp4\n", "file ../" + file])
+            filelist.writelines(["file second.mp4\n", "file '../" + file + "'"])
 
         command = f"ffmpeg -f concat -safe 0 -i temp/list.txt -c copy temp/output.mp4 && mv temp/output.mp4 '{file}'"
         print(f"running command {command}")
