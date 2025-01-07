@@ -24,6 +24,7 @@ def run(options: Args):
     _clear_temp_folder()
 
     os.makedirs("temp", exist_ok=True)
+    os.makedirs("output", exist_ok=True)
 
     def _copy_to_temp(file: str):
         new_file = "temp/" + os.path.basename(file)
