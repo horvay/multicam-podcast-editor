@@ -22,7 +22,6 @@ def shortcut(
     short_start: float,
     till: float | None,
     skip: List[Tuple[float, float]] | None,
-    enable_jumpcuts=True,
     threads=10,
     output_name="final",
 ):
@@ -102,12 +101,3 @@ def shortcut(
         preset="slow",
         bitrate="3000k",
     )
-
-    if enable_jumpcuts:
-        command = (
-            f"auto-editor output/{output_name}-short.mp4 --margin 0.1sec --no-open "
-            "--extras '-c:v libx264 -preset slow -b:v 3000k -maxrate 3000k -bufsize 6000k' "
-            f"-o output/{output_name}-short-jumpcut.mp4"
-        )
-
-        subprocess.run(command, shell=True)

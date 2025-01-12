@@ -1,6 +1,5 @@
 import math
 import re
-import subprocess
 from typing import List
 
 from moviepy import (
@@ -13,10 +12,8 @@ from moviepy import (
 
 def multicam(
     screenshares: List[str],
-    enable_jumpcuts: bool,
     vids: List[VideoClip],
     average_volumes,
-    res1080p=True,
     threads=10,
     output_name="final",
 ):
@@ -65,9 +62,10 @@ def multicam(
         n_sec = sec + 5
 
         # skip if in reduced focus times and we've been focused in the last 10 seconds
-        if unfocused_count < 2 and any(
-            start < sec < end for start, end in reduced_focus_times
-        ):
+        if (
+            unfocused_count < 2
+            and any(start < sec < end for start, end in reduced_focus_times)
+        ) or (sec > main.duration - 11):
             print(f"interval {i} unfocussing due to screenshare")
             _add_subclip(sec, n_sec, main)
             unfocused_count, focused_count = unfocused_count + 1, 0
@@ -110,16 +108,3 @@ def multicam(
         preset="slow",
         bitrate="3000k",
     )
-
-    print(f"apply jumpcuts? {enable_jumpcuts}")
-    if enable_jumpcuts:
-        command = (
-            f"auto-editor output/{output_name}.mp4 --margin 0.4sec --no-open "
-            "--extras '-c:v libx264 -c:a aac -preset slow -b:v 3000k -maxrate 3000k -bufsize 6000k' "
-            f"-o output/{output_name}-jumpcut.mp4"
-        )
-
-        if res1080p:
-            command += " -res 1920,1080"
-
-        subprocess.run(command, shell=True)

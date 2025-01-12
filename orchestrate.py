@@ -1,4 +1,5 @@
 import os
+import random
 import subprocess
 import shutil
 
@@ -8,6 +9,7 @@ from audio_enhancement import podcast_audio
 from captioning import caption_video, transcribe_file
 from chat import chat_with_transcript
 from collage import populate_file_with_images
+from jumpcuts import apply_jumpcuts
 from multicam import multicam
 from short_creator import shortcut
 from transcribe import transcribe
@@ -21,6 +23,9 @@ def _clear_temp_folder():
 
 
 def run(options: Args):
+    if options.output_name == "final":
+        options.output_name = f"final{int(random.random()*10000)}"
+
     _clear_temp_folder()
 
     os.makedirs("temp", exist_ok=True)
@@ -80,10 +85,8 @@ def run(options: Args):
     if options.multicam:
         multicam(
             options.screenshare_input,
-            options.jump_cuts,
             vids,
             average_volumes,
-            options.hi_def,
             options.threads,
             options.output_name,
         )
@@ -95,8 +98,23 @@ def run(options: Args):
             options.short,
             options.till,
             options.cut,
-            options.jump_cuts,
             options.threads,
+            options.output_name,
+        )
+
+    print(f"apply jumpcuts? {options.jump_cuts}")
+    if options.jump_cuts:
+        vids_to_jumpcut: list[str] = []
+        if os.path.exists(f"output/{options.output_name}.mp4"):
+            vids_to_jumpcut.append(f"output/{options.output_name}.mp4")
+
+        if os.path.exists(f"output/{options.output_name}-short.mp4"):
+            vids_to_jumpcut.append(f"output/{options.output_name}-short.mp4")
+
+        apply_jumpcuts(
+            vids_to_jumpcut,
+            options.jump_cuts_margin,
+            options.hi_def,
             options.output_name,
         )
 

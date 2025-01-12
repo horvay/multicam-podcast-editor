@@ -17,6 +17,7 @@ class Args:
     collage_input: str | None = None
     screenshare_input: List[str] = field(default_factory=list)
     jump_cuts: bool = False
+    jump_cuts_margin: float = 0.75
     multicam_main_vid: str = "main.mp4"
     multicam_input: List[str] = field(default_factory=list)
     audio_enhancements: bool = False
@@ -25,7 +26,7 @@ class Args:
     threads: int = 10
     word_pause: float = 1.2
     ignore_screenshares: bool = False
-    hi_def: bool = True
+    hi_def: bool = False
     align_videos: bool = True
     output_name: str = "final"
     model: str = "llama3.2-vision"
@@ -77,6 +78,7 @@ def parse_cli_args(args):
         till=args.till,
         cut=args.cut,
         jump_cuts=args.jump_cuts,
+        jump_cuts_margin=args.jump_cuts_margin,
         transcribe_file=args.transcribe_file,
         caption_video=args.caption_video,
         question=args.question,

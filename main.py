@@ -39,6 +39,14 @@ parser.add_argument(
     "-j", "--jump-cuts", action="store_true", help="do automatic jump cuts of dead air"
 )
 parser.add_argument(
+    "-jm",
+    "--jump-cuts-margin",
+    metavar="seconds",
+    type=float,
+    default=0.75,
+    help="The amount of silence to look for x2. defaults to 0.75 so 1.5 seconds of silence is required to jumpcut",
+)
+parser.add_argument(
     "-au",
     "--audio-podcast-enhancements",
     action="store_true",
@@ -107,8 +115,8 @@ parser.add_argument(
     "-hd",
     "--hi-def",
     action="store_true",
-    help="set the output to 1080p. Defaults to true",
-    default=True,
+    help="set the output to 1080p. Defaults to false",
+    default=False,
 )
 parser.add_argument(
     "-q",
