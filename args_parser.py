@@ -55,7 +55,9 @@ def parse_cli_args(args):
     if str_pos is not None and str_pos != "":
         int_pos = _get_positon_param(str_pos)
 
-    if args.screenshare_input is not None and len(args.screenshare_input) > 0:
+    if args.ignore_screenshares:
+        screenshares = []
+    elif args.screenshare_input is not None and len(args.screenshare_input) > 0:
         screenshares = sum(args.screenshare_input, [])
     else:
         screenshares = glob("inputfiles/*screen*.mp4")

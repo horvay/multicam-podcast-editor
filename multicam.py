@@ -47,6 +47,12 @@ def multicam(
     people_vols = average_volumes[1:]
     people = vids[1:]
 
+    manditory_unfocus = []
+    for person in people:
+        # if a person drops off, unfocus
+        if person.duration < main.duration:
+            manditory_unfocus.append((person.duration - 5, person.duration + 5))
+
     final_clips: List[VideoClip] = [main.subclipped(0, 5)]
     unfocused_count: int = 0
     focused_count: int = 0
@@ -61,11 +67,20 @@ def multicam(
         sec = i * 5
         n_sec = sec + 5
 
+        if any(start < sec < end for start, end in manditory_unfocus):
+            print("unfocusing due to person dropping off")
+            _add_subclip(sec, n_sec, main)
+            continue
+
+        if sec > main.duration - 18:
+            print("unfocusing due to end of video")
+            _add_subclip(sec, n_sec, main)
+            continue
+
         # skip if in reduced focus times and we've been focused in the last 10 seconds
-        if (
-            unfocused_count < 2
-            and any(start < sec < end for start, end in reduced_focus_times)
-        ) or (sec > main.duration - 11):
+        if unfocused_count < 2 and any(
+            start < sec < end for start, end in reduced_focus_times
+        ):
             print(f"interval {i} unfocussing due to screenshare")
             _add_subclip(sec, n_sec, main)
             unfocused_count, focused_count = unfocused_count + 1, 0
