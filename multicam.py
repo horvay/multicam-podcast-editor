@@ -72,7 +72,7 @@ def multicam(
             _add_subclip(sec, n_sec, main)
             continue
 
-        if sec > main.duration - 18:
+        if sec > main.duration - 11:
             print("unfocusing due to end of video")
             _add_subclip(sec, n_sec, main)
             continue
