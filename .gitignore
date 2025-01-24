@@ -12,3 +12,6 @@ outputfiles
 Modelfile
 *.csv
 temp/*
+build/
+dist/
+*egg*info
