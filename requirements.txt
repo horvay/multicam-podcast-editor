@@ -1,7 +1,7 @@
+audalign
+faster_whisper
+ffmpeg_normalize
 moviepy
 numpy
-faster-whisper
 ollama
-audalign
-ffmpeg-normalize
 torch
