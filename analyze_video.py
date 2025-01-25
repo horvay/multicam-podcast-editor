@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from typing import Dict, List
 
@@ -45,16 +46,23 @@ def analyze(
     def _add_second_to(file: str):
         cleanup_second()
         # first add a second to the main video because sometimes it doesn't start first
-        command = f"ffmpeg -i '{file}' -t 1 -c:v copy temp/second.mp4"
+        fp_file = os.path.abspath(file)
+
+        command = f"ffmpeg -i '{fp_file}' -t 1 -c:v copy temp/second.mp4"
         print(f"running command {command}")
         subprocess.run(command, shell=True)
 
         with open("temp/list.txt", "w") as filelist:
-            filelist.writelines(["file second.mp4\n", "file '../" + file + "'"])
+            filelist.writelines(["file second.mp4\n", f"file '{fp_file}'"])
 
-        command = f"ffmpeg -f concat -safe 0 -i temp/list.txt -c copy temp/output.mp4 && mv temp/output.mp4 '{file}'"
+        fp_list = os.path.abspath("temp/list.txt")
+        fp_output = os.path.abspath("temp/output.mp4")
+
+        command = f"ffmpeg -f concat -safe 0 -i '{fp_list}' -c copy {fp_output}"
         print(f"running command {command}")
         subprocess.run(command, shell=True)
+
+        shutil.move(fp_output, fp_file)
         cleanup_second()
 
     #################################
@@ -67,9 +75,12 @@ def analyze(
     print(f"syncing the bit rate of the f8ollowing: {vid_list}")
     if not skip_bitrate_sync:
         for vid in vid_list:
-            command = f"ffmpeg -threads {threads} -filter_threads {threads} -filter_complex_threads {threads} -i '{vid}' -c:v copy -b:a 128k -ar 44100 -frame_size 1024 temp/temp_video.mp4 && mv temp/temp_video.mp4 '{vid}'"
+            fp_output = os.path.abspath("temp/temp_video.mp4")
+            command = f"ffmpeg -threads {threads} -filter_threads {threads} -filter_complex_threads {threads} -i '{os.path.abspath(vid)}' -c:v copy -b:a 128k -ar 44100 -frame_size 1024 {fp_output}"
             print(f"running command {command}")
             subprocess.run(command, shell=True)
+
+            shutil.move(fp_output, vid)
 
     print("finished making all bit rates the same")
 

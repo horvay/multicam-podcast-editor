@@ -61,8 +61,10 @@ def run(options: Args):
         max_time = options.till or options.short + 180
         print(f"trimming until time {max_time+10}s")
         for vid in all_people:
-            command = f"ffmpeg -i '{vid}' -t {max_time + 10} -c copy temp/output.mp4 && mv temp/output.mp4 '{vid}'"
+            fp_vid = os.path.abspath(vid)
+            command = f"ffmpeg -i '{fp_vid}' -t {max_time + 10} -c copy temp/output.mp4"
             subprocess.run(command, shell=True)
+            shutil.move("temp/output.mp4", fp_vid)
 
     print(all_people)
 
