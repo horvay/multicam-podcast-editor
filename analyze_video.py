@@ -75,12 +75,13 @@ def analyze(
     print(f"syncing the bit rate of the f8ollowing: {vid_list}")
     if not skip_bitrate_sync:
         for vid in vid_list:
-            fp_output = os.path.abspath("temp/temp_video.mp4")
-            command = f"ffmpeg -threads {threads} -filter_threads {threads} -filter_complex_threads {threads} -i '{os.path.abspath(vid)}' -c:v copy -b:a 128k -ar 44100 -frame_size 1024 {fp_output}"
+            fp_tempvid = os.path.abspath("temp/temp_video.mp4")
+
+            command = f"ffmpeg -threads {threads} -filter_threads {threads} -filter_complex_threads {threads} -i '{os.path.abspath(vid)}' -c:v copy -b:a 128k -ar 44100 -frame_size 1024 {fp_tempvid}"
             print(f"running command {command}")
             subprocess.run(command, shell=True)
 
-            shutil.move(fp_output, vid)
+            shutil.move(fp_tempvid, vid)
 
     print("finished making all bit rates the same")
 
