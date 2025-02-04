@@ -143,8 +143,12 @@ def run(options: Args):
         transcribe_file(options.transcribe_file)
 
     if options.caption_video is not None and options.caption_video != "":
+        if options.caption_csv is None or options.caption_csv == "":
+            options.caption_csv = f"{options.caption_video}.csv"
+
         caption_video(
             options.caption_video,
+            options.caption_csv,
             options.font,
             options.font_size,
             options.caption_position,

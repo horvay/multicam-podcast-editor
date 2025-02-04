@@ -11,6 +11,7 @@ class Args:
     cut: List[Tuple[float, float]] | None = None
     transcribe_file: str | None = None
     caption_video: str | None = None
+    caption_csv: str | None = None
     question: str | None = None
     caption_position: Tuple[int, int] | None = None
     collage_dir: str | None = None
@@ -83,6 +84,7 @@ def parse_cli_args(args):
         jump_cuts_margin=args.jump_cuts_margin,
         transcribe_file=args.transcribe_file,
         caption_video=args.caption_video,
+        caption_csv=args.caption_csv,
         question=args.question,
         caption_position=int_pos,
         audio_enhancements=args.audio_podcast_enhancements,

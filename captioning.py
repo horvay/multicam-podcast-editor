@@ -208,7 +208,8 @@ def transcribe_file(file: str):
 
 
 def caption_video(
-    file: str,
+    vid_file: str,
+    csv_file: str,
     font: str,
     font_size: int,
     caption_position: tuple[int, int] | None,
@@ -241,11 +242,11 @@ def caption_video(
 
     ################################
 
-    with open(file + ".csv", mode="r") as csvfile:
+    with open(csv_file, mode="r") as csvfile:
         reader = csv.DictReader(csvfile)
         transcription: List[WordTranscript] = list(reader)  # pyright: ignore
 
-    video = VideoFileClip(file)
+    video = VideoFileClip(vid_file)
 
     text_clips: List[Clip.Clip] = []
 

@@ -152,7 +152,15 @@ parser.add_argument(
     "--caption-video",
     type=str,
     metavar="video",
-    help="the video to caption and csv with the same name as the video, so 'inputfiles/myvideo.mp4' would need inputfiles/myvideo.mp4.csv to exist. Use -tf to generate the csv. Example: -cv 'inputfiles/myvideo.mp4'",
+    help="the video to caption and csv with the same name as the video, so 'inputfiles/myvideo.mp4' would need inputfiles/myvideo.mp4.csv to exist. Otherwise use -csv. Use -tf to generate the csv. Example: -cv 'inputfiles/myvideo.mp4'",
+    default="",
+)
+parser.add_argument(
+    "-csv",
+    "--caption-csv",
+    type=str,
+    metavar="csv",
+    help="the csv to go along with the video being captioned. Created by the --transcribe-file command though technically can be done by hand",
     default="",
 )
 parser.add_argument(
