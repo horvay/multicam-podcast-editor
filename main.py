@@ -195,6 +195,14 @@ parser.add_argument(
     default="",
 )
 parser.add_argument(
+    "-cs",
+    "--caption-size",
+    type=str,
+    metavar='"x, y"',
+    help='The width and hight of the area the captions display, like -cp "300, 500" would be 300 pixels width, 500 pixels height. Defaults will try to fit it somewhere (good luck)',
+    default="",
+)
+parser.add_argument(
     "-cd",
     "--collage-dir",
     type=str,
@@ -207,6 +215,28 @@ parser.add_argument(
     type=str,
     metavar="VIDEO",
     help="the mp4 file to add the college to",
+)
+
+parser.add_argument(
+    "-vm",
+    "--music-video-music",
+    type=str,
+    metavar="DIR",
+    help="The directory with a bunch of mp3 that will be fadded in and out to create a video",
+)
+parser.add_argument(
+    "-va",
+    "--music-video-art",
+    type=str,
+    metavar="DIR",
+    help="The directory with a bunch of jpg or png images that will be fadded in and out to create a video",
+)
+parser.add_argument(
+    "-vr",
+    "--music-video-reminders",
+    type=str,
+    metavar="DIR",
+    help="The directory with a bunch of png images that will be fadded in and out as a reminder",
 )
 
 args = parser.parse_args()

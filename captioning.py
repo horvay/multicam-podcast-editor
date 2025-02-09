@@ -213,6 +213,7 @@ def caption_video(
     font: str,
     font_size: int,
     caption_position: tuple[int, int] | None,
+    caption_size: tuple[int, int] | None,
     caption_type: int = 1,
 ):
     # ##### private functions #######
@@ -312,7 +313,9 @@ def caption_video(
         for word in words_to_delete:
             transcription.remove(word)
 
-        if video.size[0] > video.size[1]:
+        if caption_size is not None:
+            width, height = caption_size
+        elif video.size[0] > video.size[1]:
             width, height = int(video.size[0] * 0.3), int(video.size[1] * 0.34)
         else:
             width, height = int(video.size[0] * 0.4), int(video.size[1] * 0.3)

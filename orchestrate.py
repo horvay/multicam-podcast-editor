@@ -8,7 +8,7 @@ from args_parser import Args
 from audio_enhancement import podcast_audio
 from captioning import caption_video, transcribe_file
 from chat import chat_with_transcript
-from collage import populate_file_with_images
+from collage import create_music_video, populate_file_with_images
 from jumpcuts import apply_jumpcuts
 from multicam import multicam
 from short_creator import shortcut
@@ -152,8 +152,16 @@ def run(options: Args):
             options.font,
             options.font_size,
             options.caption_position,
+            options.caption_size,
             options.caption_type,
         )
 
     if options.question != "" and options.question is not None:
         chat_with_transcript(options.question, options.model)
+
+    if options.music_video_music is not None and options.music_video_art is not None:
+        create_music_video(
+            options.music_video_music,
+            options.music_video_art,
+            options.music_video_reminders,
+        )

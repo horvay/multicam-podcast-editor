@@ -14,6 +14,7 @@ class Args:
     caption_csv: str | None = None
     question: str | None = None
     caption_position: Tuple[int, int] | None = None
+    caption_size: Tuple[int, int] | None = None
     collage_dir: str | None = None
     collage_input: str | None = None
     screenshare_input: List[str] = field(default_factory=list)
@@ -34,6 +35,9 @@ class Args:
     caption_type: int = 1
     font: str = "./FreeMonospacedBold.otf"
     font_size: int = 60
+    music_video_music: str | None = None
+    music_video_art: str | None = None
+    music_video_reminders: str | None = None
 
 
 def _get_positon_param(pos_param: str):
@@ -52,9 +56,14 @@ def _get_positon_param(pos_param: str):
 
 def parse_cli_args(args):
     str_pos = args.caption_position
+    str_size = args.caption_size
     int_pos = None
+    int_size = None
     if str_pos is not None and str_pos != "":
         int_pos = _get_positon_param(str_pos)
+
+    if str_size is not None and str_size != "":
+        int_size = _get_positon_param(str_size)
 
     if args.ignore_screenshares:
         screenshares = []
@@ -87,6 +96,7 @@ def parse_cli_args(args):
         caption_csv=args.caption_csv,
         question=args.question,
         caption_position=int_pos,
+        caption_size=int_size,
         audio_enhancements=args.audio_podcast_enhancements,
         transcribe=args.transcribe,
         skip_bitrate_sync=args.skip_bitrate_sync,
@@ -100,4 +110,7 @@ def parse_cli_args(args):
         caption_type=args.caption_type,
         font=args.font,
         font_size=args.font_size,
+        music_video_music=args.music_video_music,
+        music_video_art=args.music_video_art,
+        music_video_reminders=args.music_video_reminders,
     )
