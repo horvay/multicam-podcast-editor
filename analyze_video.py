@@ -4,7 +4,7 @@ import subprocess
 from typing import Dict, List
 
 import audalign as ad
-from audalign.recognizers.correcognize import CorrelationConfig
+from audalign.config.correlation_spectrogram import CorrelationSpectrogramConfig
 from tprint import print_decorator
 from moviepy import (
     AudioClip,
@@ -29,10 +29,8 @@ def analyze(
     ######### private functions ##############
 
     def _padd_video_by(vid: VideoClip, padding: float):
-        silent_audio = vid.audio.subclipped(0, padding)  # pyright: ignore
-
         blank_clip = ColorClip(size=vid.size, color=(0, 0, 0), duration=padding)
-        blank_clip = blank_clip.with_audio(silent_audio)
+        vid = vid.with_start(padding)
 
         return concatenate_videoclips([blank_clip, vid])
 
@@ -48,7 +46,7 @@ def analyze(
         # first add a second to the main video because sometimes it doesn't start first
         fp_file = os.path.abspath(file)
 
-        command = f"ffmpeg -i '{fp_file}' -t 1 -c:v copy temp/second.mp4"
+        command = f"ffmpeg -i '{fp_file}' -t 5 -c:v copy temp/second.mp4"
         print(f"running command {command}")
         subprocess.run(command, shell=True)
 
@@ -90,9 +88,9 @@ def analyze(
         ### padd the person clips to align them to main vid #
         #####################################################
 
-        config = CorrelationConfig()
+        config = CorrelationSpectrogramConfig()
         config.multiprocessing = False
-        correlation_rec = ad.CorrelationRecognizer(config)
+        correlation_rec = ad.CorrelationSpectrogramRecognizer(config)
 
         result: Dict[str, float] = ad.target_align(  # pyright: ignore
             target_file=vid_list[0],
@@ -112,13 +110,13 @@ def analyze(
     if align_videos:
         for vid_index, vid in enumerate(vid_list):
             if vid_index == 0:
-                vids[vid_index] = vids[vid_index].subclipped(1)
+                vids[vid_index] = vids[vid_index].subclipped(5)
                 continue
 
             padding = result[vid.replace("temp/", "")]  # pyright: ignore
             print("will pad " + str(padding) + " seconds to " + vid)
 
-            vids[vid_index] = _padd_video_by(vids[vid_index], padding).subclipped(1)
+            vids[vid_index] = _padd_video_by(vids[vid_index], padding).subclipped(5)
 
         print("finish syncing based on audio")
 
