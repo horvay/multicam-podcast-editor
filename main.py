@@ -202,6 +202,7 @@ parser.add_argument(
     help='The width and hight of the area the captions display, like -cp "300, 500" would be 300 pixels width, 500 pixels height. Defaults will try to fit it somewhere (good luck)',
     default="",
 )
+
 parser.add_argument(
     "-cd",
     "--collage-dir",

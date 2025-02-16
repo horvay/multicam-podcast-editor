@@ -342,11 +342,11 @@ def caption_video(
 
         new_font_size = fonts[1]
 
-        def _place_current_line(line: List[TextClip], end_time: float):
+        def _place_current_line(line: List[TextClip], end_time: float, lag: float = 0):
             for line_clip in line:
                 text_clips.append(
                     line_clip.with_duration(
-                        end_time - line_clip.start + 0.5
+                        end_time - line_clip.start + 0.5 + lag
                     ).with_effects(
                         [
                             vfx.CrossFadeIn(0.3),
@@ -366,6 +366,7 @@ def caption_video(
             clip = _create_font_autoresize(new_font_size, text, width)
 
             reset = False
+            lag = 0
             if x > 0:  # always print text if at the beginnig of line
                 if x + clip.size[0] > width:
                     y = y + clip.size[1] + 5
@@ -376,11 +377,12 @@ def caption_video(
                 if y + clip.size[1] > height:
                     reset = True
 
-                if len(current_line) > 0 and start - p_start > 1.0:
+                if len(current_line) > 0 and start - p_end > 2:
+                    lag = 1.5
                     reset = True
 
                 if reset:
-                    _place_current_line(current_line, p_end)
+                    _place_current_line(current_line, p_end, lag)
                     current_line = []
                     x, y = 0, 0
                     new_font_size = _new_font_size(text)
