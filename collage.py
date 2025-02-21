@@ -1,18 +1,31 @@
+import random
 from glob import glob
 from typing import List
+
 from moviepy import (
     AudioFileClip,
     CompositeAudioClip,
     CompositeVideoClip,
     ImageClip,
     VideoFileClip,
-    vfx,
     afx,
+    vfx,
 )
-import random
+from moviepy.Clip import np
+import numpy
 
 
-def populate_file_with_images(input_vid: str, image_dir: str):
+def _apply_vignette(image: numpy.ndarray):
+    H, W, _ = image.shape
+    sigma = max(H, W) / 6
+    center_i, center_j = H // 2, W // 2
+    i, j = np.mgrid[0:H, 0:W]
+    distance = np.sqrt((i - center_i) ** 2 + (j - center_j) ** 2)
+    mask = np.exp(-(distance**2) / (2 * sigma**2))
+    return (image * mask[:, :, np.newaxis]).astype(image.dtype)
+
+
+def populate_file_with_images(input_vid: str, image_dir: str, output: str):
     vid = VideoFileClip(input_vid)
     images = glob(f"{image_dir}/*.png") + glob(f"{image_dir}/*.jpg")
     assert len(images) > 0, "no images found! (motherlicker)"
@@ -23,6 +36,7 @@ def populate_file_with_images(input_vid: str, image_dir: str):
 
     image_clips: list[ImageClip] = [
         ImageClip(img=random_images[x], duration=image_time)
+        .image_transform(_apply_vignette)
         .with_start(x * image_time)
         .with_effects(
             [
@@ -36,11 +50,11 @@ def populate_file_with_images(input_vid: str, image_dir: str):
     print("Finished scheduling image clips")
 
     final = CompositeVideoClip([vid] + image_clips)
-    final.write_videofile("output/final.mp4")
+    final.write_videofile(f"output/{output}.mp4")
 
 
 def create_music_video(
-    music_location: str, art_location: str, reminder_loc: str | None
+    music_location: str, art_location: str, output: str, reminder_loc: str | None
 ):
     songs = glob(f"{music_location}/*.mp3")
     assert len(songs) > 0, "No MP3 files found in music directory!"
@@ -68,11 +82,12 @@ def create_music_video(
 
     image_clips: list[ImageClip] = [
         ImageClip(img=random_images[x], duration=image_time)
+        .image_transform(_apply_vignette)
         .with_start(x * image_time)
         .with_effects(
             [
-                vfx.CrossFadeIn(1.0),
-                vfx.CrossFadeOut(1.0),
+                vfx.CrossFadeIn(2.0),
+                vfx.CrossFadeOut(2.0),
             ]
         )
         for x in range(0, len(random_images))
@@ -93,4 +108,4 @@ def create_music_video(
     final = CompositeVideoClip(image_clips + reminder_clips, size=(1920, 1080))
     final = final.with_audio(audio)
     final = final.with_fps(24)
-    final.write_videofile("output/final.mp4")
+    final.write_videofile(f"output/{output}.mp4")

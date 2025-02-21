@@ -11,29 +11,24 @@ parser = argparse.ArgumentParser(
     description="A cli to automatically multicam edit, jump cut, transcribe and interact with your podcast with an LLM"
 )
 parser.add_argument(
-    "-m", "--multicam", action="store_true", help="do automatic multicam edits"
-)
-parser.add_argument(
-    "-mm",
-    "--multicam-main-vid",
-    type=str,
-    metavar="video",
-    help="name of the main baseline video to use for the automatic multicam",
-    default="inputfiles/main.mp4",
-)
-parser.add_argument(
-    "-mi",
-    "--multicam-input",
+    "-i",
+    "--input",
     action="append",
     nargs="+",
-    help="Used for adding individuals' videos in the multicam scenarios. Use -mm for the main video, and this for individual files. By default it looks for person*.mp4 or *webcam*.mp4 files. ex: -mi 'inputfiles/myperson1.mp4' -mi 'inputfiles/myperson2.mp4' etc",
+    help="General input. See other options for how to use it like -m, -s, -cv, etc",
+)
+parser.add_argument(
+    "-m",
+    "--multicam",
+    action="store_true",
+    help="do automatic multicam edits. Must include input files with -i. The first input file should be the main file with all camera/audio, and the following should be the invididual camera/audio. Ex: -m -i combined_vid.mp4 -i person1.mp4 -i person2.mp4 -i person3.mp4",
 )
 parser.add_argument(
     "-si",
     "--screenshare-input",
     action="append",
     nargs="+",
-    help="Used for adding screenshare videos used in the multicam scenarios. Use -mm for the main video, and this for screenshare files. By default it looks for *screenshare*.mp4 or *webcam*.mp4 files. ex: -si 'inputfiles/myscreen1.mp4' -si 'inputfiles/myscreen2.mp4' etc",
+    help="Used for adding screenshare videos used in the multicam scenarios. Use -i for the combined and individuals' mp4s, and this for screenshare mp4s. ex: -si 'inputfiles/myscreen1.mp4' -si 'inputfiles/myscreen2.mp4' etc",
 )
 parser.add_argument(
     "-j", "--jump-cuts", action="store_true", help="do automatic jump cuts of dead air"
@@ -47,16 +42,22 @@ parser.add_argument(
     help="The amount of silence to look for x2. defaults to 0.75 so 1.5 seconds of silence is required to jumpcut",
 )
 parser.add_argument(
-    "-au",
+    "-ape",
     "--audio-podcast-enhancements",
     action="store_true",
     help="enhance the audio using some standard podcast audio filters. Will enhance anything in the output folder that is the --output-name or final.mp4 by default",
 )
 parser.add_argument(
+    "-ame",
+    "--audio-music-enhancements",
+    action="store_true",
+    help="enhance the audio using some standard music audio filters. Will enhance anything in the output folder that is the --output-name or final.mp4 by default",
+)
+parser.add_argument(
     "-t",
     "--transcribe",
     action="store_true",
-    help="transcribe the podcast to a text file",
+    help="transcribe the podcast to a text file. If given 1 input file, it'll transcribe to a csv for captioning. If multiple input files, it'll assume it's the whole multicam setup (see multicam option for how to provide inputs)",
 )
 parser.add_argument(
     "-sb",
@@ -99,12 +100,6 @@ parser.add_argument(
     default=1.2,
 )
 parser.add_argument(
-    "-is",
-    "--ignore-screenshares",
-    action="store_true",
-    help="by default when the screen is shared more emphasis will be put on the group video with the scerenshare. Requires putting the screenshare files in the same directory",
-)
-parser.add_argument(
     "-a",
     "--align-videos",
     action="store_true",
@@ -119,13 +114,6 @@ parser.add_argument(
     default=False,
 )
 parser.add_argument(
-    "-q",
-    "--question",
-    type=str,
-    help="ask your transcript a question with an OLLAMA",
-    default="",
-)
-parser.add_argument(
     "-o",
     "--output-name",
     type=str,
@@ -133,27 +121,11 @@ parser.add_argument(
     default="final",
 )
 parser.add_argument(
-    "-mo",
-    "--model",
-    type=str,
-    help="when asking a question, which model should be used? Defaults to llama3.2-vision",
-    default="llama3.2-vision",
-)
-parser.add_argument(
-    "-tf",
-    "--transcribe-file",
-    metavar="file",
-    type=str,
-    help="transcribe a single file word by word usually to be used for generating lyrics on a video",
-    default="",
-)
-parser.add_argument(
     "-cv",
     "--caption-video",
-    type=str,
-    metavar="video",
-    help="the video to caption and csv with the same name as the video, so 'inputfiles/myvideo.mp4' would need inputfiles/myvideo.mp4.csv to exist. Otherwise use -csv. Use -tf to generate the csv. Example: -cv 'inputfiles/myvideo.mp4'",
-    default="",
+    action="store_true",
+    help="caption a video. Requires the video to caption as an input, ie, -cv -i /video/to/caption.mp4",
+    default=False,
 )
 parser.add_argument(
     "-csv",
@@ -204,40 +176,27 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "-cd",
-    "--collage-dir",
-    type=str,
-    metavar="DIR",
-    help="The directory with a bunch of jpg or png images that will be fadded in and out to create a video",
-)
-parser.add_argument(
-    "-ci",
-    "--collage-input",
-    type=str,
-    metavar="VIDEO",
-    help="the mp4 file to add the college to",
+    "-co",
+    "--collage",
+    action="store_true",
+    help="Takes an existng mp4 file and displays images evenly throughout the video. The first input is the mp4 file to add images to, and the second is the dictory with images, ex, -co -i /path/to/mp4 -i /path/to/imgs/dir",
+    default=False,
 )
 
 parser.add_argument(
-    "-vm",
-    "--music-video-music",
-    type=str,
-    metavar="DIR",
-    help="The directory with a bunch of mp3 that will be fadded in and out to create a video",
+    "-mv",
+    "--music-video",
+    action="store_true",
+    help="Takes a folder of music, art, and optionally reminders (images that show sometimes) directories, and puts them together. The format would be -mv -i /music/dir -i /art/dir -i /remiders/dir",
+    default=False,
 )
+
 parser.add_argument(
-    "-va",
-    "--music-video-art",
-    type=str,
-    metavar="DIR",
-    help="The directory with a bunch of jpg or png images that will be fadded in and out to create a video",
-)
-parser.add_argument(
-    "-vr",
-    "--music-video-reminders",
-    type=str,
-    metavar="DIR",
-    help="The directory with a bunch of png images that will be fadded in and out as a reminder",
+    "-se",
+    "--seed",
+    type=int,
+    help="seed used for all random logic",
+    default=-1,
 )
 
 args = parser.parse_args()

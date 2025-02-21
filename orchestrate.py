@@ -2,12 +2,12 @@ import os
 import random
 import subprocess
 import shutil
+import time
 
 from analyze_video import analyze
 from args_parser import Args
 from audio_enhancement import podcast_audio
 from captioning import caption_video, transcribe_file
-from chat import chat_with_transcript
 from collage import create_music_video, populate_file_with_images
 from jumpcuts import apply_jumpcuts
 from multicam import multicam
@@ -23,6 +23,14 @@ def _clear_temp_folder():
 
 
 def run(options: Args):
+    if options.seed == -1:
+        seed = int(time.time())
+        random.seed(seed)
+        print(f"using seed: {seed}. Use -se to get same generations")
+    else:
+        random.seed(options.seed)
+        print(f"using provided seed of {options.seed}")
+
     if options.output_name == "final":
         options.output_name = f"final{int(random.random()*10000)}"
 
@@ -36,48 +44,53 @@ def run(options: Args):
         shutil.copy(file, new_file)
         return new_file
 
-    assert (options.collage_dir is None and options.collage_input is None) or (
-        options.collage_dir is not None and options.collage_input is not None
-    ), "collage-dir and collage-input must be used together"
+    if options.collage:
+        assert len(options.inputs) == 2, "must provide both movie and image directory"
 
-    if options.collage_input is not None and options.collage_dir is not None:
-        assert os.path.exists(options.collage_input), "collage-input does not exist"
-        assert os.path.exists(options.collage_dir), "collage-dir does not exist"
-        populate_file_with_images(options.collage_input, options.collage_dir)
+        moviefile, art_dir = options.inputs
+        assert os.path.exists(moviefile) and os.path.exists(art_dir), "invalid paths"
+
+        populate_file_with_images(moviefile, art_dir, options.output_name)
 
     if options.multicam or options.short is not None:
-        new_file = _copy_to_temp(options.multicam_main_vid)
-        options.multicam_main_vid = new_file
-
-        for i, vid in enumerate(options.multicam_input):
-            new_file = _copy_to_temp(vid)
-            options.multicam_input[i] = new_file
+        assert len(options.inputs) >= 2, "multicam must have 2 or more files"
+        for vid_index, dir in enumerate(options.inputs):
+            assert os.path.exists(dir), f"vid file {dir} not a valid file"
+            temp_file = _copy_to_temp(dir)
+            options.inputs[vid_index] = temp_file
 
     ##################################################
-
-    all_people = [options.multicam_main_vid] + options.multicam_input
 
     if options.short is not None:
         max_time = options.till or options.short + 180
         print(f"trimming until time {max_time+10}s")
-        for vid in all_people:
-            fp_vid = os.path.abspath(vid)
+
+        assert (
+            len(options.inputs) >= 2
+        ), "creating short from multicam must have 2 or more files"
+        for vid_index, dir in enumerate(options.inputs):
+            assert os.path.exists(dir), f"vid file {dir} not a valid file"
+            fp_vid = os.path.abspath(dir)
             command = f"ffmpeg -i '{fp_vid}' -t {max_time + 10} -c copy temp/output.mp4"
             subprocess.run(command, shell=True)
             shutil.move("temp/output.mp4", fp_vid)
 
-    print(all_people)
+    print(options.inputs)
 
     average_volumes = []
     vids = []
 
-    if options.multicam or options.short is not None:
+    if (
+        options.multicam
+        or options.short
+        or (options.transcribe and len(options.inputs) >= 2)
+    ):
         max_time = -1
         if options.short is not None:
             max_time = options.till or options.short + 180
 
         vids, average_volumes = analyze(
-            all_people,
+            options.inputs,
             max_time,
             options.align_videos,
             options.skip_bitrate_sync,
@@ -120,7 +133,48 @@ def run(options: Args):
             options.output_name,
         )
 
-    if options.audio_enhancements:
+    if options.transcribe:
+        if len(options.inputs) == 1:
+            transcribe_file(options.inputs[0])
+        elif len(options.inputs) >= 2:
+            transcribe(options.inputs[1:], options.word_pause)
+
+    if options.caption_video:
+        if options.caption_csv is None or options.caption_csv == "":
+            options.caption_csv = f"{options.caption_video}.csv"
+
+        assert os.path.exists(
+            options.caption_csv
+        ), f"can't find lyric file {options.caption_csv}"
+
+        assert len(options.inputs) > 0 and os.path.exists(
+            options.inputs[0]
+        ), "required valid input"
+
+        caption_video(
+            options.inputs[0],
+            options.caption_csv,
+            options.font,
+            options.font_size,
+            options.caption_position,
+            options.caption_size,
+            options.caption_type,
+        )
+
+    if options.music_video:
+        assert (
+            len(options.inputs) >= 2 and len(options.inputs) <= 3
+        ), "music video should only have 2-3 inputs"
+
+        for dir in options.inputs:
+            assert os.path.exists(dir), f"vid file {dir} not a valid file"
+
+        music, art, *reminders = options.inputs
+        reminders = None if reminders == [] else reminders[0]
+
+        create_music_video(music, art, options.output_name, reminders)
+
+    if options.audio_podcast_enhancements or options.audio_music_enhancements:
         vids_to_enhance: list[str] = []
         if os.path.exists(f"output/{options.output_name}.mp4"):
             vids_to_enhance.append(f"output/{options.output_name}.mp4")
@@ -134,34 +188,16 @@ def run(options: Args):
         if os.path.exists(f"output/{options.output_name}-short-jumpcut.mp4"):
             vids_to_enhance.append(f"output/{options.output_name}-short-jumpcut.mp4")
 
-        podcast_audio(vids_to_enhance, options.threads)
+        if len(vids_to_enhance) == 0 and len(options.inputs) == 1:
+            input = options.inputs[0]
+            ext = os.path.splitext(input)[1]
 
-    if options.transcribe:
-        transcribe(options.multicam_input, options.word_pause)
+            assert os.path.exists(input), f"input {input} doesn't exist"
+            newfile = f"output/{options.output_name}{ext}"
+            shutil.copy(input, newfile)
 
-    if options.transcribe_file is not None and options.transcribe_file != "":
-        transcribe_file(options.transcribe_file)
+            vids_to_enhance.append(newfile)
 
-    if options.caption_video is not None and options.caption_video != "":
-        if options.caption_csv is None or options.caption_csv == "":
-            options.caption_csv = f"{options.caption_video}.csv"
+        enhance_type = "music" if options.audio_music_enhancements else "podcast"
 
-        caption_video(
-            options.caption_video,
-            options.caption_csv,
-            options.font,
-            options.font_size,
-            options.caption_position,
-            options.caption_size,
-            options.caption_type,
-        )
-
-    if options.question != "" and options.question is not None:
-        chat_with_transcript(options.question, options.model)
-
-    if options.music_video_music is not None and options.music_video_art is not None:
-        create_music_video(
-            options.music_video_music,
-            options.music_video_art,
-            options.music_video_reminders,
-        )
+        podcast_audio(vids_to_enhance, enhance_type, options.threads)
