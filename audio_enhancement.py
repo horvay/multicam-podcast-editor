@@ -14,7 +14,7 @@ def podcast_audio(vid_list, enhance_type, threads=10):
     filters = (
         "afftdn=nr=12:nf=-50, anequalizer='c0 f=100 w=100 g=3 t=0, c0 f=10000 w=2000 g=3 t=0, c1 f=100 w=100 g=3 t=0, c1 f=10000 w=2000 g=3 t=0', acompressor"
         if enhance_type == "music"
-        else "afftdn=nr=12:nf=-50, anequalizer='c0 f=1500 w=1000 g=3 t=0,c1 f=1500 w=1000 g=3 t=0', acompressor"
+        else "afftdn=nr=12:nf=-50, acompressor"
     )
 
     for vid in vid_list:

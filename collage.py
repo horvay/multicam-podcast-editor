@@ -1,5 +1,7 @@
+import os
 import random
 from glob import glob
+import shutil
 from typing import List
 
 from moviepy import (
@@ -54,7 +56,11 @@ def populate_file_with_images(input_vid: str, image_dir: str, output: str):
 
 
 def create_music_video(
-    music_location: str, art_location: str, output: str, reminder_loc: str | None
+    music_location: str,
+    art_location: str,
+    output: str,
+    reminder_loc: str | None,
+    thumbnail: str,
 ):
     songs = glob(f"{music_location}/*.mp3")
     assert len(songs) > 0, "No MP3 files found in music directory!"
@@ -93,6 +99,15 @@ def create_music_video(
         for x in range(0, len(random_images))
     ]
 
+    if thumbnail != "":
+        image_clips.insert(
+            0,
+            ImageClip(img=thumbnail, duration=1.5)
+            .resized((1920, 1080))
+            .with_effects([vfx.CrossFadeOut(1.0)])
+            .with_start(0),
+        )
+
     reminder_clips: List[ImageClip] = []
     if reminder_loc is not None:
         reminders = glob(f"{reminder_loc}/*.png")
@@ -109,3 +124,7 @@ def create_music_video(
     final = final.with_audio(audio)
     final = final.with_fps(24)
     final.write_videofile(f"output/{output}.mp4")
+
+    temp_files = glob("*TEMP_MPY_wvf_snd.mp3")
+    for file in temp_files:
+        os.unlink(file)

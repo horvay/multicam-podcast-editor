@@ -192,6 +192,15 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-th",
+    "--thumbnail",
+    type=str,
+    metavar="path",
+    help="path to a thumbnail to use when creating a video. Works for music videos right now. Adds it to the beginning for 1 second",
+    default="",
+)
+
+parser.add_argument(
     "-se",
     "--seed",
     type=int,

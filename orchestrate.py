@@ -166,13 +166,20 @@ def run(options: Args):
             len(options.inputs) >= 2 and len(options.inputs) <= 3
         ), "music video should only have 2-3 inputs"
 
+        if options.thumbnail != "":
+            assert os.path.exists(
+                options.thumbnail
+            ), f"thumbnail doesn't exist at {options.thumbnail}"
+
         for dir in options.inputs:
             assert os.path.exists(dir), f"vid file {dir} not a valid file"
 
         music, art, *reminders = options.inputs
         reminders = None if reminders == [] else reminders[0]
 
-        create_music_video(music, art, options.output_name, reminders)
+        create_music_video(
+            music, art, options.output_name, reminders, options.thumbnail
+        )
 
     if options.audio_podcast_enhancements or options.audio_music_enhancements:
         vids_to_enhance: list[str] = []
