@@ -1,7 +1,6 @@
 import os
 import random
 from glob import glob
-import shutil
 from typing import List
 
 from moviepy import (

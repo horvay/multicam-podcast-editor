@@ -183,6 +183,7 @@ def run(options: Args):
 
     if options.audio_podcast_enhancements or options.audio_music_enhancements:
         vids_to_enhance: list[str] = []
+
         if os.path.exists(f"output/{options.output_name}.mp4"):
             vids_to_enhance.append(f"output/{options.output_name}.mp4")
 
