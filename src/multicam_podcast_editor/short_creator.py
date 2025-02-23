@@ -1,8 +1,7 @@
 import math
-import subprocess
 from typing import List, Tuple
 
-from tprint import print_decorator
+from multicam_podcast_editor.tprint import print_decorator
 
 # import moviepy.video.fx.all as vfx
 from moviepy import (

@@ -5,7 +5,7 @@ from typing import Dict, List
 
 import audalign as ad
 from audalign.config.correlation_spectrogram import CorrelationSpectrogramConfig
-from tprint import print_decorator
+from multicam_podcast_editor.tprint import print_decorator
 from moviepy import (
     AudioClip,
     ColorClip,

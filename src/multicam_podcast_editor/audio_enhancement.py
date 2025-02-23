@@ -1,5 +1,5 @@
 import os
-from tprint import print_decorator
+from multicam_podcast_editor.tprint import print_decorator
 from ffmpeg_normalize import FFmpegNormalize
 
 print = print_decorator(print)

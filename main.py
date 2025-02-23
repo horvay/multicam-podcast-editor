@@ -1,8 +1,8 @@
 import argparse
 
-from args_parser import parse_cli_args
-from orchestrate import run
-from tprint import print_decorator
+from multicam_podcast_editor.args_parser import parse_cli_args
+from multicam_podcast_editor.orchestrate import run
+from multicam_podcast_editor.tprint import print_decorator
 
 print = print_decorator(print)
 

@@ -4,15 +4,18 @@ import subprocess
 import shutil
 import time
 
-from analyze_video import analyze
-from args_parser import Args
-from audio_enhancement import podcast_audio
-from captioning import caption_video, transcribe_file
-from collage import create_music_video, populate_file_with_images
-from jumpcuts import apply_jumpcuts
-from multicam import multicam
-from short_creator import shortcut
-from transcribe import transcribe
+from multicam_podcast_editor.analyze_video import analyze
+from multicam_podcast_editor.args_parser import Args
+from multicam_podcast_editor.audio_enhancement import podcast_audio
+from multicam_podcast_editor.captioning import caption_video, transcribe_file
+from multicam_podcast_editor.collage import (
+    create_music_video,
+    populate_file_with_images,
+)
+from multicam_podcast_editor.jumpcuts import apply_jumpcuts
+from multicam_podcast_editor.multicam import multicam
+from multicam_podcast_editor.short_creator import shortcut
+from multicam_podcast_editor.transcribe import transcribe
 
 
 def _clear_temp_folder():
