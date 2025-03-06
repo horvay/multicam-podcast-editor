@@ -129,6 +129,16 @@ def run(options: Args):
         if os.path.exists(f"output/{options.output_name}-short.mp4"):
             vids_to_jumpcut.append(f"output/{options.output_name}-short.mp4")
 
+        if len(vids_to_jumpcut) == 0 and len(options.inputs) == 1:
+            input = options.inputs[0]
+            ext = os.path.splitext(input)[1]
+
+            assert os.path.exists(input), f"input {input} doesn't exist"
+            newfile = f"output/{options.output_name}{ext}"
+            shutil.copy(input, newfile)
+
+            vids_to_jumpcut.append(newfile)
+
         apply_jumpcuts(
             vids_to_jumpcut,
             options.jump_cuts_margin,
