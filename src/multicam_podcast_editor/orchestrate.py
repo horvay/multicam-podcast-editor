@@ -5,6 +5,7 @@ import shutil
 import time
 
 from multicam_podcast_editor.analyze_video import analyze
+from multicam_podcast_editor.cut_video import cut_video
 from multicam_podcast_editor.args_parser import Args
 from multicam_podcast_editor.audio_enhancement import podcast_audio
 from multicam_podcast_editor.captioning import caption_video, transcribe_file
@@ -35,7 +36,7 @@ def run(options: Args):
         print(f"using provided seed of {options.seed}")
 
     if options.output_name == "final":
-        options.output_name = f"final{int(random.random()*10000)}"
+        options.output_name = f"final{int(random.random() * 10000)}"
 
     _clear_temp_folder()
 
@@ -66,11 +67,11 @@ def run(options: Args):
 
     if options.short is not None:
         max_time = options.till or options.short + 180
-        print(f"trimming until time {max_time+10}s")
+        print(f"trimming until time {max_time + 10}s")
 
-        assert (
-            len(options.inputs) >= 2
-        ), "creating short from multicam must have 2 or more files"
+        assert len(options.inputs) >= 2, (
+            "creating short from multicam must have 2 or more files"
+        )
         for vid_index, dir in enumerate(options.inputs):
             assert os.path.exists(dir), f"vid file {dir} not a valid file"
             fp_vid = os.path.abspath(dir)
@@ -115,6 +116,22 @@ def run(options: Args):
             average_volumes,
             options.short,
             options.till,
+            options.threads,
+            options.output_name,
+        )
+
+    # Handle cutting (standalone or after short)
+    if options.cut is not None:
+        cut_input = options.inputs[0]
+
+        if options.short or options.multicam:
+            cut_input = f"output/{options.output_name}.mp4"
+            assert os.path.exists(cut_input), "short didn't output?"
+        else:
+            assert len(options.inputs) >= 1, "cutting requires at least one input file"
+
+        cut_video(
+            cut_input,
             options.cut,
             options.threads,
             options.output_name,
@@ -156,13 +173,13 @@ def run(options: Args):
         if options.caption_csv is None or options.caption_csv == "":
             options.caption_csv = f"{options.caption_video}.csv"
 
-        assert os.path.exists(
-            options.caption_csv
-        ), f"can't find lyric file {options.caption_csv}"
+        assert os.path.exists(options.caption_csv), (
+            f"can't find lyric file {options.caption_csv}"
+        )
 
-        assert len(options.inputs) > 0 and os.path.exists(
-            options.inputs[0]
-        ), "required valid input"
+        assert len(options.inputs) > 0 and os.path.exists(options.inputs[0]), (
+            "required valid input"
+        )
 
         caption_video(
             options.inputs[0],
@@ -175,14 +192,14 @@ def run(options: Args):
         )
 
     if options.music_video:
-        assert (
-            len(options.inputs) >= 2 and len(options.inputs) <= 3
-        ), "music video should only have 2-3 inputs"
+        assert len(options.inputs) >= 2 and len(options.inputs) <= 3, (
+            "music video should only have 2-3 inputs"
+        )
 
         if options.thumbnail != "":
-            assert os.path.exists(
-                options.thumbnail
-            ), f"thumbnail doesn't exist at {options.thumbnail}"
+            assert os.path.exists(options.thumbnail), (
+                f"thumbnail doesn't exist at {options.thumbnail}"
+            )
 
         for dir in options.inputs:
             assert os.path.exists(dir), f"vid file {dir} not a valid file"
