@@ -1,7 +1,0 @@
-audalign
-faster_whisper
-ffmpeg_normalize
-moviepy
-numpy
-ollama
-torch
