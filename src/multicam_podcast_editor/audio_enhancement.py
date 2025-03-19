@@ -27,14 +27,7 @@ def podcast_audio(vid_list, enhance_type, threads=10):
             "acompressor=threshold=-18dB:ratio=3:1:attack=5:release=50 "
         )
     else:
-        filters = (
-            "afftdn, "
-            "adeclick, "
-            "adeclip=window=40:threshold=5:hsize=200, "
-            "highpass=f=30, "
-            "loudnorm=I=-14:TP=-3:LRA=7, "
-            "alimiter=level_in=1:level_out=1:limit=-1dB:attack=5:release=50:asc=true:asc_level=0.8"
-        )
+        filters = "highpass=f=100, lowpass=f=5000, adeclip=window=20, afftdn=nf=-50:tn=1, alimiter=level_in=1:level_out=1:limit=0.794, compand=attacks=0.5:decays=1:points=-70/-70|-30/-30|-15/-15|0/-10, firequalizer=gain_entry='entry(200,-4);entry(4000,-3)', loudnorm=I=-18:TP=-1:LRA=9"
 
     for vid in vid_list:
         if enhance_type == "podcast":
@@ -42,27 +35,27 @@ def podcast_audio(vid_list, enhance_type, threads=10):
                 f"ffmpeg -i {vid} -vn -acodec pcm_s16le -ar 48000 temp/temp-audio.wav -y",
                 shell=True,
             )
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            waveform, sample_rate = torchaudio.load("./temp/temp-audio.wav")
-            print(f"Input waveform shape: {waveform.shape}")
-
-            model = pretrained.get_model("htdemucs_ft").to(device)
-            waveform = waveform.to(device)
-            model.eval()
-
-            with torch.no_grad():
-                denoised_waveform = apply.apply_model(model, waveform.unsqueeze(0))[
-                    0
-                ].cpu()
-            denoised_waveform = denoised_waveform[3]
-            print(f"Denoised waveform shape: {denoised_waveform.shape}")
-
-            torchaudio.save(
-                "./temp/temp-enhanced-audio.wav", denoised_waveform, sample_rate
-            )
+            # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            # waveform, sample_rate = torchaudio.load("./temp/temp-audio.wav")
+            # print(f"Input waveform shape: {waveform.shape}")
+            #
+            # model = pretrained.get_model("htdemucs_ft").to(device)
+            # waveform = waveform.to(device)
+            # model.eval()
+            #
+            # with torch.no_grad():
+            #     denoised_waveform = apply.apply_model(model, waveform.unsqueeze(0))[
+            #         0
+            #     ].cpu()
+            # denoised_waveform = denoised_waveform[3]
+            # print(f"Denoised waveform shape: {denoised_waveform.shape}")
+            #
+            # torchaudio.save(
+            #     "./temp/temp-enhanced-audio.wav", denoised_waveform, sample_rate
+            # )
 
             subprocess.run(
-                f"ffmpeg -i temp/temp-enhanced-audio.wav -af '{filters}'  temp/temp-enhanced-audio2.wav -y",
+                f'ffmpeg -i temp/temp-audio.wav -af "{filters}"  temp/temp-enhanced-audio2.wav -y',
                 shell=True,
             )
 
