@@ -154,20 +154,6 @@ def _word_timing_adjusted(word: WordTranscript):
     return start, end
 
 
-def _get_positon_param(pos_param: str):
-    coordinates = pos_param.split(",")
-    if len(coordinates) != 2:
-        raise Exception(
-            "invalid position parameter. Must be two values separated by a comma with the whole thing in quotes"
-        )
-    try:
-        x, y = int(coordinates[0]), int(coordinates[1])
-    except ValueError:
-        raise Exception("coordinates must be integers")
-
-    return (x, y)
-
-
 def transcribe_file(file: str):
     video = VideoFileClip(file)
     video.audio.write_audiofile("temp/temp.wav")  # pyright: ignore
@@ -215,6 +201,7 @@ def caption_video(
     caption_position: tuple[int, int] | None,
     caption_size: tuple[int, int] | None,
     caption_type: int = 1,
+    test: bool = False,
 ):
     # ##### private functions #######
 
@@ -248,6 +235,12 @@ def caption_video(
         transcription: List[WordTranscript] = list(reader)  # pyright: ignore
 
     video = VideoFileClip(vid_file)
+    if test:
+        print("test captioning enabled!")
+        video = video.subclipped(0.0, 20.0)
+        transcription = [x for x in transcription if float(x["end"]) < 20.0]
+    else:
+        video = video
 
     text_clips: List[Clip.Clip] = []
 
@@ -359,10 +352,8 @@ def caption_video(
             p_word = transcription[word_index - 1] if word_index > 0 else None
             text = n_word["word"].strip()
 
-            start, end = _word_timing_adjusted(n_word)
-            p_start, p_end = (
-                _word_timing_adjusted(p_word) if p_word is not None else (0, 0)
-            )
+            start, _ = _word_timing_adjusted(n_word)
+            _, p_end = _word_timing_adjusted(p_word) if p_word is not None else (0, 0)
             clip = _create_font_autoresize(new_font_size, text, width)
 
             reset = False

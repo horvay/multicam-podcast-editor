@@ -12,6 +12,7 @@ class Args:
     caption_csv: str | None = None
     caption_position: Tuple[int, int] | None = None
     caption_size: Tuple[int, int] | None = None
+    test: bool = False
     collage: bool = False
     inputs: List[str] = field(default_factory=list)
     screenshare_input: List[str] = field(default_factory=list)

@@ -189,6 +189,7 @@ def run(options: Args):
             options.caption_position,
             options.caption_size,
             options.caption_type,
+            options.test,
         )
 
     if options.music_video:
