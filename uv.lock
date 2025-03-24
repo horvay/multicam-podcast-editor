@@ -28,7 +28,7 @@ wheels = [
 [[package]]
 name = "audalign"
 version = "1.3.1"
-source = { registry = "https://pypi.org/simple" }
+source = { directory = "../audalign" }
 dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },
@@ -37,10 +37,23 @@ dependencies = [
     { name = "setuptools" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cb/b3/1f917ac2d202090861f1c3c952814cc9ddbed58ea1d35fabd7d14d17fac4/audalign-1.3.1.tar.gz", hash = "sha256:17e4b0076e66bc286a38f9dec4d91416c1c035077667a0343c6dd646eec42d1b", size = 43557 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/25/24/af008cf18794f411aab9593f67e43a9a6202a4f2746e79310242abdc4089/audalign-1.3.1-py3-none-any.whl", hash = "sha256:4d78f71a026d30c7462521084a56c7b1f50103e955b04e2ce7015fd8a107c477", size = 56737 },
+
+[package.metadata]
+requires-dist = [
+    { name = "matplotlib", specifier = "==3.8.2" },
+    { name = "noisereduce", marker = "extra == 'noisereduce'", specifier = "==2.0.1" },
+    { name = "numpy", specifier = "==1.26.4" },
+    { name = "pillow", marker = "extra == 'visrecognize'", specifier = "==10.2.0" },
+    { name = "pydub", specifier = "==0.25.1" },
+    { name = "pytest", marker = "extra == 'test'", specifier = "==8.0.0" },
+    { name = "pytest-xdist", marker = "extra == 'test'", specifier = "==3.1.0" },
+    { name = "scikit-image", marker = "extra == 'visrecognize'", specifier = "==0.19.3" },
+    { name = "scipy", specifier = "==1.12.0" },
+    { name = "setuptools", specifier = ">=59.6.0" },
+    { name = "torch", marker = "extra == 'noisereduce'", specifier = "==2.2.0" },
+    { name = "tqdm", specifier = "==4.66.2" },
 ]
+provides-extras = ["noisereduce", "visrecognize", "test"]
 
 [[package]]
 name = "av"
@@ -538,10 +551,9 @@ wheels = [
 
 [[package]]
 name = "multicam-podcast-editor"
-version = "0.6.9"
+version = "0.6.10"
 source = { editable = "." }
 dependencies = [
-    { name = "audalign" },
     { name = "av" },
     { name = "certifi" },
     { name = "charset-normalizer" },
@@ -582,13 +594,16 @@ dependencies = [
     { name = "torch" },
     { name = "torchaudio" },
     { name = "tqdm" },
-    { name = "triton" },
     { name = "urllib3" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "audalign" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "audalign", specifier = ">=1.3.1" },
     { name = "av", specifier = ">=14.1.0" },
     { name = "certifi", specifier = ">=2025.1.31" },
     { name = "charset-normalizer", specifier = ">=3.4.1" },
@@ -629,9 +644,11 @@ requires-dist = [
     { name = "torch", specifier = ">=2.4.1" },
     { name = "torchaudio", specifier = ">=2.4.1" },
     { name = "tqdm", specifier = ">=4.66.2" },
-    { name = "triton", specifier = ">=3.0.0" },
     { name = "urllib3", specifier = ">=2.3.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "audalign", directory = "../audalign" }]
 
 [[package]]
 name = "networkx"
