@@ -168,7 +168,8 @@ def transcribe_file(file: str):
         # vad_filter=True,
         condition_on_previous_text=False,
         log_progress=True,
-        beam_size=10,
+        beam_size=15,
+        patience=1.5,
         word_timestamps=True,
     )
 
