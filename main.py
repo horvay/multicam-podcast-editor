@@ -190,7 +190,13 @@ parser.add_argument(
     help="Takes a folder of music, art, and optionally reminders (images that show sometimes) directories, and puts them together. The format would be -mv -i /music/dir -i /art/dir -i /remiders/dir",
     default=False,
 )
-
+parser.add_argument(
+    "-mvw",
+    "--music-video-with-videos",
+    action="store_true",
+    help="Create a music video using video clips instead of images. Format: -mvw -i /music/dir -i /videos/dir -i /reminders/dir",
+    default=False,
+)
 parser.add_argument(
     "-th",
     "--thumbnail",

@@ -1,3 +1,4 @@
+from glob import glob
 import os
 import random
 import subprocess
@@ -11,19 +12,13 @@ from multicam_podcast_editor.audio_enhancement import podcast_audio
 from multicam_podcast_editor.captioning import caption_video, transcribe_file
 from multicam_podcast_editor.collage import (
     create_music_video,
+    create_music_video_with_videos,
     populate_file_with_images,
 )
 from multicam_podcast_editor.jumpcuts import apply_jumpcuts
 from multicam_podcast_editor.multicam import multicam
 from multicam_podcast_editor.short_creator import shortcut
 from multicam_podcast_editor.transcribe import transcribe
-
-
-def _clear_temp_folder():
-    if os.path.exists("temp"):
-        for filename in os.listdir("temp"):
-            file_path = os.path.join("temp", filename)
-            os.unlink(file_path)  # unlink also deletes
 
 
 def run(options: Args):
@@ -38,8 +33,9 @@ def run(options: Args):
     if options.output_name == "final":
         options.output_name = f"final{int(random.random() * 10000)}"
 
-    _clear_temp_folder()
-
+    for file in glob("*TEMP_MPY_wvf_snd.mp3"):
+        os.remove(file)
+    shutil.rmtree("temp", ignore_errors=True)
     os.makedirs("temp", exist_ok=True)
     os.makedirs("output", exist_ok=True)
 
@@ -192,7 +188,7 @@ def run(options: Args):
             options.test,
         )
 
-    if options.music_video:
+    if options.music_video or options.music_video_with_videos:
         assert len(options.inputs) >= 2 and len(options.inputs) <= 3, (
             "music video should only have 2-3 inputs"
         )
@@ -208,9 +204,15 @@ def run(options: Args):
         music, art, *reminders = options.inputs
         reminders = None if reminders == [] else reminders[0]
 
-        create_music_video(
-            music, art, options.output_name, reminders, options.thumbnail
-        )
+        print(f"found folders music ({music}) art ({art}) reminders ({reminders})")
+        if options.music_video_with_videos:
+            create_music_video_with_videos(
+                music, art, options.output_name, reminders, options.thumbnail
+            )
+        else:
+            create_music_video(
+                music, art, options.output_name, reminders, options.thumbnail
+            )
 
     if options.audio_podcast_enhancements or options.audio_music_enhancements:
         vids_to_enhance: list[str] = []

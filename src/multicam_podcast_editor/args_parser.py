@@ -31,6 +31,7 @@ class Args:
     font: str = "./FreeMonospacedBold.otf"
     font_size: int = 60
     music_video: bool = False
+    music_video_with_videos: bool = False
     thumbnail: str = ""
     seed: int = -1
 
@@ -95,6 +96,7 @@ def parse_cli_args(args):
         font=args.font,
         font_size=args.font_size,
         music_video=args.music_video,
+        music_video_with_videos=args.music_video_with_videos,
         thumbnail=args.thumbnail,
         seed=args.seed,
     )
