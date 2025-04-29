@@ -126,12 +126,13 @@ def run(options: Args):
         else:
             assert len(options.inputs) >= 1, "cutting requires at least one input file"
 
-        cut_video(
-            cut_input,
-            options.cut,
-            options.threads,
-            options.output_name,
-        )
+        if len(options.cut) > 0:
+            cut_video(
+                cut_input,
+                options.cut,
+                options.threads,
+                options.output_name,
+            )
 
     print(f"apply jumpcuts? {options.jump_cuts}")
     if options.jump_cuts:
