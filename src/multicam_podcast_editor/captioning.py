@@ -218,7 +218,7 @@ def caption_video(
                 vertical_align="center",
                 stroke_width=5,
                 size=(None, size),
-                margin=(13, 2, 13, 2),
+                margin=(13, 2, 13, 12),
                 font_size=size * modifier,
                 color="white",
             )
