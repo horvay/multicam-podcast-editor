@@ -25,7 +25,6 @@ class Args:
     skip_bitrate_sync: bool = False
     threads: int = 10
     word_pause: float = 1.2
-    hi_def: bool = False
     align_videos: bool = True
     output_name: str = "final"
     caption_type: int = 1
@@ -136,13 +135,6 @@ def build_parser():
         action="store_true",
         help="align videos based on volumes",
         default=True,
-    )
-    parser.add_argument(
-        "-hd",
-        "--hi-def",
-        action="store_true",
-        help="set the output to 1080p. Defaults to false",
-        default=False,
     )
     parser.add_argument(
         "-o",
@@ -302,7 +294,6 @@ def parse_cli_args(args):
         word_pause=args.word_pause,
         align_videos=args.align_videos,
         output_name=args.output_name,
-        hi_def=args.hi_def,
         caption_type=args.caption_type,
         font=args.font,
         font_size=args.font_size,
