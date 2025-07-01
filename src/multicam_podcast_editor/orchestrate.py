@@ -89,7 +89,7 @@ def run(options: Args):
         if options.short is not None:
             max_time = options.till or options.short + 180
 
-        vids, average_volumes = analyze(
+        vids, average_volumes, paddings = analyze(
             options.inputs,
             max_time,
             options.align_videos,
@@ -100,8 +100,10 @@ def run(options: Args):
     if options.multicam:
         multicam(
             options.screenshare_input,
+            options.inputs,  # original file paths in temp folder
             vids,
             average_volumes,
+            paddings,
             options.threads,
             options.output_name,
         )

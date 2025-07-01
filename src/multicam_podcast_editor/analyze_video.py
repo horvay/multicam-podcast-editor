@@ -100,21 +100,29 @@ def analyze(
 
         print(result)
 
-    vids: List[VideoClip] = []
+    # Keep track of how much padding was applied to each video so the multicam
+    # step (which now relies exclusively on ffmpeg) can accurately map the
+    # timestamps it generates back to the original source files. The first
+    # entry corresponds to the main video which has no audio-sync padding
+    # applied (only the 5 s duplicate that we remove later).
+    paddings: list[float] = [0.0 for _ in vid_list]
 
-    for vid in vid_list:
-        vids.append(VideoFileClip(vid))
+    # Load the video clips via MoviePy for further volume analysis.
+    vids: list[VideoClip] = [VideoFileClip(v) for v in vid_list]
 
     print("videos loaded")
 
     if align_videos:
         for vid_index, vid in enumerate(vid_list):
             if vid_index == 0:
+                # Remove the duplicated 5-second intro that was added earlier for
+                # safer ffmpeg concat syncing.
                 vids[vid_index] = vids[vid_index].subclipped(5)
                 continue
 
             padding = result[vid.replace("temp/", "")]  # pyright: ignore
-            print("will pad " + str(padding) + " seconds to " + vid)
+            paddings[vid_index] = padding
+            print(f"will pad {padding} seconds to {vid}")
 
             vids[vid_index] = _padd_video_by(vids[vid_index], padding).subclipped(5)
 
@@ -134,4 +142,4 @@ def analyze(
 
     print("finished chunking audio into 5 second average segments")
 
-    return vids, average_volumes
+    return vids, average_volumes, paddings
